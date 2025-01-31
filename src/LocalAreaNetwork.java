@@ -11,8 +11,12 @@ public class LocalAreaNetwork {
         incidents.addFirst(incident);
     }
 
-    public synchronized Incident getIncident() {
-        return incidents.getLast();
+    public synchronized Incident removeFire() {
+        return incidents.removeLast();
+    }
+
+    public int getNumIncidents() {
+        return incidents.size();
     }
 
 }
