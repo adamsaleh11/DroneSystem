@@ -7,11 +7,11 @@ public class LocalAreaNetwork {
 
     }
 
-    public void addIncident(Incident incident) {
+    public synchronized void addIncident(Incident incident) {
         incidents.addFirst(incident);
     }
 
-    public Incident getIncident() {
+    public synchronized Incident getIncident() {
         return incidents.getLast();
     }
 
