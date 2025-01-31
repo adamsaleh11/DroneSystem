@@ -19,4 +19,8 @@ public class LocalAreaNetwork {
         return incidents.size();
     }
 
+    public boolean cleanZone() {
+        return incidents.size() == 0;
+    }
+
 }

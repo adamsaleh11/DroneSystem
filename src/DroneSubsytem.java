@@ -10,7 +10,7 @@ public class DroneSubsytem implements Runnable{
     @Override
     public void run() {
         while(true) {
-            if (lan.getNumIncidents() != 0) {
+            if (!lan.cleanZone()) {
                 lan.removeFire();
             }
             try {
@@ -19,5 +19,6 @@ public class DroneSubsytem implements Runnable{
 
             }
         }
+
     }
 }
