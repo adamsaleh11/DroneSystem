@@ -1,22 +1,23 @@
 public class Incident {
-    private int time;
-    private int zone;
+    private String time;
+    private int zoneID;
     private String eventType;
-    private String Severity;
+    private String severity;
+    private int waterAmountNeeded;
 
-    public Incident(int time, int zone, String eventType, String severity) {
+    Incident(String time, int zoneID, String eventType, String severity) {
         this.time = time;
-        this.zone = zone;
+        this.zoneID = zoneID;
         this.eventType = eventType;
-        Severity = severity;
+        this.severity = severity;
     }
 
-    public int getTime() {
+    public String getTime() {
         return time;
     }
 
-    public int getZone() {
-        return zone;
+    public int getZoneID() {
+        return zoneID;
     }
 
     public String getEventType() {
@@ -24,6 +25,10 @@ public class Incident {
     }
 
     public String getSeverity() {
-        return Severity;
+        return severity;
+    }
+
+    public int getWaterAmountNeeded() {
+        return waterAmountNeeded;
     }
 }
