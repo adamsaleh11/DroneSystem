@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/DroneSystem.iml" filepath="$PROJECT_DIR$/DroneSystem.iml" />
+      <module fileurl="file://$PROJECT_DIR$/docs/DroneSystem.iml" filepath="$PROJECT_DIR$/docs/DroneSystem.iml" />
     </modules>
   </component>
 </project>
