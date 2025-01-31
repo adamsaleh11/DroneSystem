@@ -1,3 +1,5 @@
+import java.util.List;
+
 public class DroneSubsytem implements Runnable{
     private  LocalAreaNetwork lan = new LocalAreaNetwork();
     private int droneID;
@@ -16,7 +18,6 @@ public class DroneSubsytem implements Runnable{
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
-
             }
         }
 

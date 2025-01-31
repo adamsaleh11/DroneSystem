@@ -1,9 +1,11 @@
+import java.util.LinkedList;
 import java.util.List;
 
 public class LocalAreaNetwork {
     private List<Incident> incidents;
 
     public LocalAreaNetwork() {
+        this.incidents = new LinkedList<>();
 
     }
 
@@ -12,6 +14,11 @@ public class LocalAreaNetwork {
     }
 
     public synchronized Incident removeFire() {
+        while(cleanZone()) {
+            try {
+                wait();
+            } catch (InterruptedException e){}
+        }
         return incidents.removeLast();
     }
 
@@ -20,7 +27,7 @@ public class LocalAreaNetwork {
     }
 
     public boolean cleanZone() {
-        return incidents.size() == 0;
+        return incidents.isEmpty();
     }
 
 }
