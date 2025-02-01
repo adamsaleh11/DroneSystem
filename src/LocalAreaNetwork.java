@@ -4,6 +4,7 @@ import java.util.List;
 public class LocalAreaNetwork {
     private List<Incident> incidents;
     private List<String> droneMessage;
+    private List<Incident> droneQueue;
 
     public LocalAreaNetwork() {
         this.incidents = new LinkedList<>();
@@ -20,6 +21,11 @@ public class LocalAreaNetwork {
 
     public String getDroneMessage(){
         return droneMessage.getLast();
+    }
+
+    public void assignIncident(Incident incident) {
+        droneQueue.add(incident);
+        notify();
     }
 
     public synchronized Incident removeFire() {

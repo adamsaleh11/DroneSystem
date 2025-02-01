@@ -16,6 +16,8 @@ public class Scheduler extends Thread{
                     throw new RuntimeException(e);
                 }
             }
+            lan.assignIncident(incident);
+
             String message = lan.getDroneMessage();
             if(message == null) {
                 try {
