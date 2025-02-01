@@ -7,23 +7,27 @@ public class Scheduler extends Thread{
 
     @Override
     public void run() {
-        while(true) {
-            Incident incident = lan.getIncident();
-            if(incident == null) {
-                try {
-                    wait();
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
+        while (true) {
+            synchronized (lan) {
+                while (lan.cleanZone()) {
+                    try {
+                        lan.wait();
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    }
                 }
+                Incident incident = lan.getIncident();
+                lan.assignIncident(incident);
+                lan.notifyAll();
             }
-            lan.assignIncident(incident);
 
-            String message = lan.getDroneMessage();
-            if(message == null) {
-                try {
-                    wait();
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
+            synchronized (lan) {
+                while (lan.getDroneMessage() == null) {
+                    try {
+                        lan.wait();
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    }
                 }
             }
         }

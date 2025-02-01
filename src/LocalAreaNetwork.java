@@ -8,11 +8,14 @@ public class LocalAreaNetwork {
 
     public LocalAreaNetwork() {
         this.incidents = new LinkedList<>();
+        this.droneMessage = new LinkedList<>();
+        this.droneQueue = new LinkedList<>();
 
     }
 
     public synchronized void addIncident(Incident incident) {
         incidents.addFirst(incident);
+        notifyAll();
     }
 
     public synchronized Incident getIncident() {
