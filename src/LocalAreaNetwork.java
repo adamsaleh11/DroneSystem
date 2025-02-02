@@ -22,7 +22,7 @@ public class LocalAreaNetwork {
         if (incidents.isEmpty()) {
             return null;
         }
-        return incidents.getLast();
+        return incidents.removeLast();
     }
 
     public synchronized String getDroneMessage(){
@@ -47,8 +47,8 @@ public class LocalAreaNetwork {
     }
 
     public synchronized void removeFire() {
-        if (!incidents.isEmpty()) {
-            Incident incident = incidents.removeLast();
+        if (!droneQueue.isEmpty()) {
+            Incident incident = droneQueue.removeLast();
             System.out.println("Fire removed at Zone " + incident.getZone());
             notifyAll();
         }

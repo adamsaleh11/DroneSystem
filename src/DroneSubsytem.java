@@ -20,8 +20,10 @@ public class DroneSubsytem implements Runnable{
                         Thread.currentThread().interrupt();
                     }
                 }
-                lan.removeFire();
-                lan.addDroneLog("Drone: " + this.droneID + "has removed the fire \n");
+                if (!lan.cleanZone()) {
+                    lan.removeFire(); // Removes the first event in `droneQueue`
+                    lan.addDroneLog("Drone: " + this.droneID + " has removed an event \n");
+                }
                 lan.notifyAll();
             }
             try {

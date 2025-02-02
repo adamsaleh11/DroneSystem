@@ -40,5 +40,8 @@ public class Incident {
     public int getWaterAmountNeeded() {
         return this.waterAmountNeeded;
     }
+    public void print() {
+        
+    }
 }
 
