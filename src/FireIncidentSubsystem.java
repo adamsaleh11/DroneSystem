@@ -1,16 +1,11 @@
 import java.io.*;
-import java.util.*;
-
 
 public class FireIncidentSubsystem implements Runnable {
-    private Scheduler scheduler;
-    private String csvFile;
+    private final LocalAreaNetwork lan;
+    private final String csvFile;
 
-    /**
-     * Constructor for FireIncidentSubsystem.
-     */
-    public FireIncidentSubsystem(Scheduler scheduler, String csvFile) {
-        this.scheduler = scheduler;
+    public FireIncidentSubsystem(LocalAreaNetwork lan, String csvFile) {
+        this.lan = lan;
         this.csvFile = csvFile;
     }
 
@@ -20,15 +15,12 @@ public class FireIncidentSubsystem implements Runnable {
         readIncidentsFromCSV();
     }
 
-    /**
-     * Reads incidents from a CSV file and adds them to the Scheduler queue.
-     */
     private void readIncidentsFromCSV() {
         try (BufferedReader br = new BufferedReader(new FileReader(csvFile))) {
             String line;
             while ((line = br.readLine()) != null) {
                 String[] data = line.split(",");
-                if (data.length < 4) continue; // Ignore malformed lines
+                if (data.length < 4) continue; 
                 
                 String time = data[0];
                 int zoneID = Integer.parseInt(data[1]);
@@ -36,10 +28,17 @@ public class FireIncidentSubsystem implements Runnable {
                 String severity = data[3];
 
                 Incident incident = new Incident(time, zoneID, eventType, severity);
-                scheduler.addIncident(incident); // Synchronization handled in Scheduler
-                System.out.println("New incident added: " + incident.getEventType() + " at Zone " + incident.getZoneID());
+
+                synchronized (lan) { 
+                    lan.addIncident(incident);
+                    System.out.println("New incident added at Zone " + zoneID);
+                    lan.notifyAll(); 
+                }
+
+                Thread.sleep(500); //  time delay
             }
-        } catch (IOException e) {
-            System.err.println("Error reading incident CSV: " + e.getMessage());
+        } catch (IOException | InterruptedException e) {
+            e.printStackTrace();
         }
     }
+
