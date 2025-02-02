@@ -16,12 +16,19 @@ public class Scheduler extends Thread{
                         Thread.currentThread().interrupt();
                     }
                 }
+
                 Incident incident = lan.getIncident();
-                lan.assignIncident(incident);
+                if (incident != null) {
+                    lan.assignIncident(incident);
+                    System.out.println("Scheduler Thread Assigning Incident");
+                }
+
+
                 lan.notifyAll();
             }
 
             synchronized (lan) {
+
                 while (lan.getDroneMessage() == null) {
                     try {
                         lan.wait();
@@ -29,6 +36,8 @@ public class Scheduler extends Thread{
                         Thread.currentThread().interrupt();
                     }
                 }
+
+                System.out.println("Scheduler received drone message.");
             }
         }
     }
