@@ -18,6 +18,7 @@ public class FireIncidentSubsystem implements Runnable {
     private void readIncidentsFromCSV() {
         try (BufferedReader br = new BufferedReader(new FileReader(csvFile))) {
             String line;
+            br.readLine();
             while ((line = br.readLine()) != null) {
                 String[] data = line.split(",");
                 if (data.length < 4) continue;

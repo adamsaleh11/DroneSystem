@@ -12,15 +12,23 @@ public class DroneSubsytem implements Runnable{
     @Override
     public void run() {
         while(true) {
-            if (!lan.cleanZone()) {
+            synchronized (lan) {
+                while(lan.cleanZone()) {
+                    try {
+                        lan.wait();
+                    } catch(InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    }
+                }
                 lan.removeFire();
-                System.out.println("Drone: " + this.droneID + "has removed the fire");
+                lan.addDroneLog("Drone: " + this.droneID + "has removed the fire \n");
+                lan.notifyAll();
             }
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
             }
         }
-
     }
 }

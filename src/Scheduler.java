@@ -20,10 +20,7 @@ public class Scheduler extends Thread{
                 Incident incident = lan.getIncident();
                 if (incident != null) {
                     lan.assignIncident(incident);
-                    System.out.println("Scheduler Thread Assigning Incident");
                 }
-
-
                 lan.notifyAll();
             }
 
@@ -36,8 +33,8 @@ public class Scheduler extends Thread{
                         Thread.currentThread().interrupt();
                     }
                 }
-
                 System.out.println("Scheduler received drone message.");
+                lan.notifyAll();
             }
         }
     }

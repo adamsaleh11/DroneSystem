@@ -3,12 +3,12 @@ import java.util.List;
 
 public class LocalAreaNetwork {
     private List<Incident> incidents;
-    private List<String> droneMessage;
+    private List<String> droneMessages;
     private List<Incident> droneQueue;
 
     public LocalAreaNetwork() {
         this.incidents = new LinkedList<>();
-        this.droneMessage = new LinkedList<>();
+        this.droneMessages = new LinkedList<>();
         this.droneQueue = new LinkedList<>();
 
     }
@@ -19,14 +19,25 @@ public class LocalAreaNetwork {
     }
 
     public synchronized Incident getIncident() {
+        if (incidents.isEmpty()) {
+            return null;
+        }
         return incidents.getLast();
     }
 
-    public String getDroneMessage(){
-        return droneMessage.getLast();
+    public synchronized String getDroneMessage(){
+        if (droneMessages.isEmpty()) {
+            return null;
+        }
+        return droneMessages.removeLast();
     }
 
-    public void assignIncident(Incident incident) {
+    public synchronized void addDroneLog(String droneMessage) {
+        droneMessages.add(droneMessage);
+        notifyAll();
+    }
+
+    public synchronized void assignIncident(Incident incident) {
         droneQueue.add(incident);
         notifyAll();
     }
@@ -35,20 +46,19 @@ public class LocalAreaNetwork {
         return incidents.isEmpty();
     }
 
-    public synchronized Incident removeFire() {
-        while(cleanZone()) {
-            try {
-                wait();
-            } catch (InterruptedException e){}
+    public synchronized void removeFire() {
+        if (!incidents.isEmpty()) {
+            Incident incident = incidents.removeLast();
+            System.out.println("Fire removed at Zone " + incident.getZone());
+            notifyAll();
         }
-        return droneQueue.removeLast();
     }
 
     public int getNumIncidents() {
         return incidents.size();
     }
 
-    public boolean cleanZone() {
+    public synchronized boolean cleanZone() {
         return droneQueue.isEmpty();
     }
 
