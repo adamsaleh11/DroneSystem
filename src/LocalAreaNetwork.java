@@ -31,6 +31,10 @@ public class LocalAreaNetwork {
         notify();
     }
 
+    public boolean checkIncident() {
+        return incidents.isEmpty();
+    }
+
     public synchronized Incident removeFire() {
         while(cleanZone()) {
             try {
