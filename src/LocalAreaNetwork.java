@@ -50,10 +50,9 @@ public class LocalAreaNetwork {
         return incidents.isEmpty();
     }
 
-    public synchronized boolean removeFire() {
+    public synchronized boolean sendDrone() {
         if (!droneQueue.isEmpty()) {
             Incident incident = droneQueue.removeLast();
-            System.out.println("Fire removed at Zone " + incident.getZone());
             notifyAll();
             return true;
         }
