@@ -41,7 +41,11 @@ public class Incident {
         return this.waterAmountNeeded;
     }
     public void print() {
-        
+        System.out.println("\nTime: "+this.getTime()+
+                "\nZone Id: " +this.getZone()+
+                "\nEvent type: "+this.getEventType() +
+                "\nSeverity: "+ this.getSeverity() +
+                "\nWater need: "+this.getWaterAmountNeeded() + "\n");
     }
 }
 

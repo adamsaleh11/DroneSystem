@@ -21,8 +21,11 @@ public class DroneSubsytem implements Runnable{
                     }
                 }
                 if (!lan.cleanZone()) {
-                    lan.removeFire(); // Removes the first event in `droneQueue`
-                    lan.addDroneLog("Drone: " + this.droneID + " has removed an event \n");
+                    if (lan.removeFire()) {
+                        String message = "Drone: " + this.droneID + " has removed an event \n";
+                        lan.addDroneLog(message);
+                    }
+
                 }
                 lan.notifyAll();
             }

@@ -15,6 +15,8 @@ public class LocalAreaNetwork {
 
     public synchronized void addIncident(Incident incident) {
         incidents.addFirst(incident);
+        System.out.println("##### Incident Added to scheduler ######");
+        incident.print();
         notifyAll();
     }
 
@@ -29,7 +31,7 @@ public class LocalAreaNetwork {
         if (droneMessages.isEmpty()) {
             return null;
         }
-        return droneMessages.removeLast();
+        return droneMessages.getLast();
     }
 
     public synchronized void addDroneLog(String droneMessage) {
@@ -38,6 +40,8 @@ public class LocalAreaNetwork {
     }
 
     public synchronized void assignIncident(Incident incident) {
+        System.out.println("##### Incident Assigned to drone ######");
+        incident.print();
         droneQueue.add(incident);
         notifyAll();
     }
@@ -46,12 +50,14 @@ public class LocalAreaNetwork {
         return incidents.isEmpty();
     }
 
-    public synchronized void removeFire() {
+    public synchronized boolean removeFire() {
         if (!droneQueue.isEmpty()) {
             Incident incident = droneQueue.removeLast();
             System.out.println("Fire removed at Zone " + incident.getZone());
             notifyAll();
+            return true;
         }
+        return false;
     }
 
     public int getNumIncidents() {

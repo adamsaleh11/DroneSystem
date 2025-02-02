@@ -11,7 +11,6 @@ public class FireIncidentSubsystem implements Runnable {
 
     @Override
     public void run() {
-        System.out.println("FireIncidentSubsystem started...");
         readIncidentsFromCSV();
     }
 
@@ -32,7 +31,6 @@ public class FireIncidentSubsystem implements Runnable {
 
                 synchronized (lan) {
                     lan.addIncident(incident);
-                    System.out.println("New incident added at Zone " + zoneID);
                     lan.notifyAll();
                 }
 
