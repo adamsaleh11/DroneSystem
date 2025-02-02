@@ -1,5 +1,3 @@
-import java.util.Scanner;
-
 /**
  * This is the main class simulating the beginning of the Drone system simulation. The user is prompted
  * how many drones they need.
@@ -19,7 +17,7 @@ public class Main {
 //          DroneSubSystem.start();
 //        }
         Thread scheduler = new Thread(new Scheduler(LAN));
-        Thread fireIncidentSystem = new Thread(new FireIncidentSubsystem(LAN, "Sample_event_file.csv"));
+        Thread fireIncidentSystem = new Thread(new FireIncidentSubsystem(LAN, "resources/Sample_event_file.csv"));
         Thread droneSubsystem = new Thread(new DroneSubsytem(LAN, 1));
         scheduler.start();
         fireIncidentSystem.start();
