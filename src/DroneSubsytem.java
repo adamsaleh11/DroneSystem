@@ -20,12 +20,9 @@ public class DroneSubsytem implements Runnable{
                         Thread.currentThread().interrupt();
                     }
                 }
-                if (!lan.cleanZone()) {
-                    if (lan.sendDrone()) {
-                        String message = "Drone: " + this.droneID + " has arrived to zone";
-                        lan.addDroneLog(message);
-                    }
-
+                if (lan.sendDrone()) {
+                    String message = "Drone: " + this.droneID + " has removed the fire/arrived to zone.\n";
+                    lan.addDroneLog(message);
                 }
                 lan.notifyAll();
             }

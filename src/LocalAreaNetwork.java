@@ -52,6 +52,7 @@ public class LocalAreaNetwork {
     }
 
     public synchronized void assignIncident(Incident incident) {
+        System.out.println("Sending incident to available drone.");
         System.out.println("##### Incident Assigned to drone ######");
         incident.print();
         droneQueue.add(incident);

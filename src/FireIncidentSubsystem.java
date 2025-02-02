@@ -30,6 +30,7 @@ public class FireIncidentSubsystem implements Runnable {
                 Incident incident = new Incident(time, zoneID, eventType, severity);
 
                 synchronized (lan) {
+                    System.out.println("Reading report logs from csv");
                     lan.addIncident(incident);
                     lan.notifyAll();
                 }
