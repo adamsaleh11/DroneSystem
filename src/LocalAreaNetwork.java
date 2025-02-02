@@ -37,7 +37,7 @@ public class LocalAreaNetwork {
                 wait();
             } catch (InterruptedException e){}
         }
-        return incidents.removeLast();
+        return droneQueue.removeLast();
     }
 
     public int getNumIncidents() {
@@ -45,7 +45,7 @@ public class LocalAreaNetwork {
     }
 
     public boolean cleanZone() {
-        return incidents.isEmpty();
+        return droneQueue.isEmpty();
     }
 
 }

@@ -1,8 +1,8 @@
 import java.util.List;
 
 public class DroneSubsytem implements Runnable{
-    private  LocalAreaNetwork lan = new LocalAreaNetwork();
-    private int droneID;
+    private final LocalAreaNetwork lan;
+    private final int droneID;
     DroneSubsytem(LocalAreaNetwork lan, int droneID) {
         this.lan = lan;
         this.droneID = droneID;
@@ -14,6 +14,7 @@ public class DroneSubsytem implements Runnable{
         while(true) {
             if (!lan.cleanZone()) {
                 lan.removeFire();
+                System.out.println("Drone: " + this.droneID + "has removed the fire");
             }
             try {
                 Thread.sleep(1000);

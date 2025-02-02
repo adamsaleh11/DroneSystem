@@ -11,6 +11,17 @@ public class Incident {
         this.eventType = eventType;
         this.severity = severity;
         //Apply logic to determine amount of water needed. Could be in data or set based on severity level.
+        switch (this.severity){
+            case "Low":
+                this.waterAmountNeeded = 10;
+                break;
+            case "Moderate":
+                this.waterAmountNeeded = 20;
+                break;
+            case "High":
+                this.waterAmountNeeded = 30;
+                break;
+        }
     }
     public String getTime() {
         return this.time;
@@ -25,6 +36,9 @@ public class Incident {
     }
     public String getSeverity() {
         return this.severity;
+    }
+    public int getWaterAmountNeeded() {
+        return this.waterAmountNeeded;
     }
 }
 
