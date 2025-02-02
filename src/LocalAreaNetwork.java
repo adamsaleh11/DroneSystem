@@ -13,6 +13,14 @@ public class LocalAreaNetwork {
 
     }
 
+    public List<String> getDroneMessages() {
+        return droneMessages;
+    }
+
+    public List<Incident> getDroneQueue() {
+        return droneQueue;
+    }
+
     public synchronized void addIncident(Incident incident) {
         incidents.addFirst(incident);
         System.out.println("##### Incident Added to scheduler ######");
@@ -25,6 +33,10 @@ public class LocalAreaNetwork {
             return null;
         }
         return incidents.removeLast();
+    }
+
+    public List<Incident> getIncidents() {
+        return incidents;
     }
 
     public synchronized String getDroneMessage(){
