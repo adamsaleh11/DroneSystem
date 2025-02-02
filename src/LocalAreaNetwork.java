@@ -52,7 +52,7 @@ public class LocalAreaNetwork {
 
     public synchronized boolean sendDrone() {
         if (!droneQueue.isEmpty()) {
-            Incident incident = droneQueue.removeLast();
+            droneQueue.removeLast();
             notifyAll();
             return true;
         }
