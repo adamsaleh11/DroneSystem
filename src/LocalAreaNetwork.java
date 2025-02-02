@@ -28,7 +28,7 @@ public class LocalAreaNetwork {
 
     public void assignIncident(Incident incident) {
         droneQueue.add(incident);
-        notify();
+        notifyAll();
     }
 
     public boolean checkIncident() {
