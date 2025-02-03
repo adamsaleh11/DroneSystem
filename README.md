@@ -1,7 +1,9 @@
 SYSC3303 A2 - 9
 
 Martin Skachkov 101150140
+
 Adam Saleh 101188457
+
 Yuvraj Bains 101235916
 
 Setup:
