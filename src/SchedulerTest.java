@@ -11,15 +11,15 @@ class SchedulerTest {
 
     @BeforeEach
     void setUp() {
-        lan = new LocalAreaNetwork(); // Use a real instance
+        lan = new LocalAreaNetwork();
         scheduler = new Scheduler(lan);
     }
 
     @AfterEach
     void tearDown() throws InterruptedException {
         if (schedulerThread != null && schedulerThread.isAlive()) {
-            schedulerThread.interrupt(); // Stop execution
-            schedulerThread.join(); // Ensure the thread stops
+            schedulerThread.interrupt();
+            schedulerThread.join();
         }
     }
 

@@ -1,15 +1,15 @@
 public class Scheduler extends Thread {
-    private final LocalAreaNetwork lan;
-    private volatile boolean shouldRun = true;
+    private final LocalAreaNetwork lan; //Sharred Memory for Threads
+    private volatile boolean shouldRun = true; //Flag for testing
 
     public Scheduler(LocalAreaNetwork lan) {
         this.lan = lan;
     }
-
+    //method to stop thread for testing
     public void stopScheduler() {
         shouldRun = false;
     }
-
+    //This method runs the scheduler thread, it switches between checking for incidents and checking for drone messages
     @Override
     public void run() {
         while (shouldRun) {
