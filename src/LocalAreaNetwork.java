@@ -97,7 +97,7 @@ public class LocalAreaNetwork {
                 "Zone ID: " + incident.getZone() + "\n" +
                 "Event Type: " + incident.getEventType() + "\n" +
                 "Severity: " + incident.getSeverity() + "\n" +
-                "Water Needed: " + incident.getWaterAmountNeeded() + "\n";
+                "Water Needed: " + incident.getWaterAmountNeeded() + "L\n";
     }
     public synchronized String printDroneSuccess() {
         return "DRONE SUCCESSFULLY COMPLETED & RETURNED FROM INCIDENT\n";
