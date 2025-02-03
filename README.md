@@ -3,7 +3,8 @@ SYSC3303 A2 - 9
 Martin Skachkov 101150140
 Adam Saleh 101188457
 
-No setup specific setup required just load up the folder and run the main function.
+Setup:
+Add any csv files to the resource folder and change the path in Main.java if needed
 
 File Names:
 DroneSystem : Drone Subsystem Thread responsible for dealing with fires
