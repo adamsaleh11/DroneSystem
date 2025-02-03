@@ -42,6 +42,7 @@ public class DroneSubsytem implements Runnable {
                         /**
                          * Simulate the drone going to the location and back. Round trip
                          */
+                        System.out.println(lan.getDroneMessage());
                         Thread.sleep(3500);
                         System.out.println(lan.printDroneSuccess());
                     } catch (InterruptedException e) {

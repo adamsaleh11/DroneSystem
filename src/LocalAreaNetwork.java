@@ -102,7 +102,7 @@ public class LocalAreaNetwork {
             Incident currentAssignment = droneQueue.removeLast();
             String droneMessage = printIncidentDetails(currentAssignment, droneId);
             droneMessages.add(droneMessage);
-            System.out.println(droneMessage);
+            //System.out.println(droneMessage);
             notifyAll();
             return true;
         }
