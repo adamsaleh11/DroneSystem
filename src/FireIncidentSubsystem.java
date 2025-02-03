@@ -1,5 +1,9 @@
 import java.io.*;
 
+/**
+ * This class represents the fire incidents system. Its responsible for reading data, initializing it
+ * as an incident and then adding the incident to the share ressource.
+ */
 public class FireIncidentSubsystem implements Runnable {
     private final LocalAreaNetwork lan;
     private final String csvFile;
@@ -18,6 +22,9 @@ public class FireIncidentSubsystem implements Runnable {
         try (BufferedReader br = new BufferedReader(new FileReader(csvFile))) {
             String line;
             br.readLine();
+            /**
+             * This block reads a row from the csv and sends it to the scheduler
+             */
             while ((line = br.readLine()) != null) {
                 String[] data = line.split(",");
                 if (data.length < 4) continue;

@@ -5,15 +5,24 @@ public class Scheduler extends Thread {
     public Scheduler(LocalAreaNetwork lan) {
         this.lan = lan;
     }
-    //method to stop thread for testing
+
+    /**method to stop thread for testing
+     *
+     */
     public void stopScheduler() {
         shouldRun = false;
     }
-    //This method runs the scheduler thread, it switches between checking for incidents and checking for drone messages
+
+    /**This method runs the scheduler thread, it switches
+     * between checking for incidents and checking for drone messages
+     */
     @Override
     public void run() {
         while (shouldRun) {
             synchronized (lan) {
+                /**
+                 * Waits until an incident is added to the incident queue
+                 */
                 while (lan.checkIncident()) {
                     try {
                         lan.wait();
@@ -22,7 +31,9 @@ public class Scheduler extends Thread {
                         return;
                     }
                 }
-
+                /**
+                 * Once an incident is retreived from the fire subsystem. It assigns it to the drone queue
+                 */
                 Incident incident = lan.getIncident();
                 if (incident != null) {
                     lan.assignIncident(incident);

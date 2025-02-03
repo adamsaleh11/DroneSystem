@@ -4,7 +4,7 @@
  */
 public class Main {
     /**
-     *
+     *Start of all of the treads
      * @param args
      */
     public static void main(String[] args) {

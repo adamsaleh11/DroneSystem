@@ -1,3 +1,6 @@
+/**
+ * This class is a simple object class that creates an incident. Used all throughout the project
+ */
 public class Incident {
     private String time;
     private int zoneID;
@@ -5,6 +8,13 @@ public class Incident {
     private String severity;
     private int waterAmountNeeded;
 
+    /**
+     * Initializing the incident object from the csv data
+     * @param time
+     * @param zoneID
+     * @param eventType
+     * @param severity
+     */
     Incident(String time, int zoneID, String eventType, String severity) {
         this.time = time;
         this.zoneID = zoneID;
