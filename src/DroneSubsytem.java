@@ -31,6 +31,7 @@ public class DroneSubsytem implements Runnable {
                     System.out.println("UNABLE TO FULFILL REQUEST> RETURNING TO BASE.\n");
                 }
                 try {
+                    Thread.sleep(1000);
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                 }
