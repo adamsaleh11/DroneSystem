@@ -33,7 +33,7 @@ public class DroneSubsytem implements Runnable {
                         Thread.currentThread().interrupt();
                     }
                 } else {
-                    System.out.println("UNABLE TO FULFILL REQUEST> RETURNING TO BASE.\n");
+                    System.out.println("UNABLE TO FULFILL REQUEST. RETURNING TO BASE.\n");
                 }
                 lan.notifyAll();
             }
