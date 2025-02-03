@@ -1,5 +1,4 @@
 import java.util.List;
-
 public class DroneSubsytem implements Runnable {
     private final LocalAreaNetwork lan;
     private final int droneID;
@@ -29,10 +28,9 @@ public class DroneSubsytem implements Runnable {
                 if(lan.sendDrone(this.droneID)) {
                     System.out.println(lan.printDroneSuccess());
                 } else {
-                    System.out.println("FAILED");
+                    System.out.println("UNABLE TO FULFILL REQUEST> RETURNING TO BASE.\n");
                 }
                 try {
-                    Thread.sleep(1000);
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                 }
