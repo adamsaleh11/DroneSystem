@@ -26,14 +26,14 @@ public class DroneSubsytem implements Runnable {
                     }
                 }
                 if(lan.sendDrone(this.droneID)) {
-                    System.out.println(lan.printDroneSuccess());
+                    try {
+                        Thread.sleep(3500);
+                        System.out.println(lan.printDroneSuccess());
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    }
                 } else {
                     System.out.println("UNABLE TO FULFILL REQUEST> RETURNING TO BASE.\n");
-                }
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
                 }
                 lan.notifyAll();
             }
