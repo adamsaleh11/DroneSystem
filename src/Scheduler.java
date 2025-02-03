@@ -33,8 +33,6 @@ public class Scheduler extends Thread{
                         Thread.currentThread().interrupt();
                     }
                 }
-                String droneMessage = lan.getDroneMessage();
-                System.out.println("Scheduler: " + droneMessage);
                 lan.notifyAll();
             }
         }

@@ -56,16 +56,19 @@ public class LocalAreaNetwork {
         System.out.println("##### Incident Assigned to drone ######");
         incident.print();
         droneQueue.add(incident);
-        notifyAll();
+        notify();
     }
 
     public boolean checkIncident() {
         return incidents.isEmpty();
     }
 
-    public synchronized boolean sendDrone() {
+    public synchronized boolean sendDrone(int droneId) {
         if (!droneQueue.isEmpty()) {
-            droneQueue.removeLast();
+            Incident currentAssignment = droneQueue.removeLast();
+            String droneMessage = printIncidentDetails(currentAssignment, droneId);
+            droneMessages.add(droneMessage);
+            System.out.println(droneMessage);
             notifyAll();
             return true;
         }
@@ -78,6 +81,20 @@ public class LocalAreaNetwork {
 
     public synchronized boolean cleanZone() {
         return droneQueue.isEmpty();
+    }
+
+    public String printIncidentDetails(Incident incident, int droneID) {
+        return  "Sending Drone "+ droneID + " to: \n" +
+                "####INCIDENT####\n" +
+                "Time: " + incident.getTime() + "\n" +
+                "Zone ID: " + incident.getZone() + "\n" +
+                "Event Type: " + incident.getEventType() + "\n" +
+                "Severity: " + incident.getSeverity() + "\n" +
+                "Water Needed: " + incident.getWaterAmountNeeded() + "\n";
+    }
+
+    public synchronized String printDroneSuccess() {
+        return "DRONE SUCCESSFULLY COMPLETED & RETURNED FROM INCIDENT\n";
     }
 
 }

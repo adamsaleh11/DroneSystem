@@ -45,7 +45,7 @@ public class Incident {
                 "\nZone Id: " +this.getZone()+
                 "\nEvent type: "+this.getEventType() +
                 "\nSeverity: "+ this.getSeverity() +
-                "\nWater need: "+this.getWaterAmountNeeded() + "\n");
+                "\nWater need: "+this.getWaterAmountNeeded() + "L\n");
     }
 }
 

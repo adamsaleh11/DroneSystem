@@ -33,13 +33,13 @@ class LocalAreaNetworkTest {
         var localAreaNetwork = new LocalAreaNetwork();
         Incident incident = new Incident("10",10,"10","10");
         localAreaNetwork.assignIncident(incident);
-        assertTrue(localAreaNetwork.sendDrone());
+        assertTrue(localAreaNetwork.sendDrone(1));
     }
 
     @Test
     void testFailedSendDrone(){
         var localAreaNetwork = new LocalAreaNetwork();
-        assertFalse(localAreaNetwork.sendDrone());
+        assertFalse(localAreaNetwork.sendDrone(1));
     }
 
     @Test
