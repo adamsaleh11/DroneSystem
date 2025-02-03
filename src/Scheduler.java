@@ -1,19 +1,25 @@
-public class Scheduler extends Thread{
-    LocalAreaNetwork lan;
+public class Scheduler extends Thread {
+    private final LocalAreaNetwork lan; //Sharred Memory for Threads
+    private volatile boolean shouldRun = true; //Flag for testing
 
     public Scheduler(LocalAreaNetwork lan) {
         this.lan = lan;
     }
-
+    //method to stop thread for testing
+    public void stopScheduler() {
+        shouldRun = false;
+    }
+    //This method runs the scheduler thread, it switches between checking for incidents and checking for drone messages
     @Override
     public void run() {
-        while (true) {
+        while (shouldRun) {
             synchronized (lan) {
                 while (lan.checkIncident()) {
                     try {
                         lan.wait();
                     } catch (InterruptedException e) {
                         Thread.currentThread().interrupt();
+                        return;
                     }
                 }
 
@@ -25,12 +31,12 @@ public class Scheduler extends Thread{
             }
 
             synchronized (lan) {
-
                 while (lan.getDroneMessage() == null) {
                     try {
                         lan.wait();
                     } catch (InterruptedException e) {
                         Thread.currentThread().interrupt();
+                        return;
                     }
                 }
                 lan.notifyAll();
