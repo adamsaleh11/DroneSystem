@@ -1,5 +1,7 @@
 SYSC3303 A2 - 9
+
 Martin Skachkov 101150140
+Adam Saleh 101188457
 
 No setup specific setup required just load up the folder and run the main function.
 
