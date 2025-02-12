@@ -1,15 +1,20 @@
-//TIP To <b>Run</b> code, press <shortcut actionId="Run"/> or
-// click the <icon src="AllIcons.Actions.Execute"/> icon in the gutter.
+/**
+ * This is the main class simulating the beginning of the Drone system simulation. The user is prompted
+ * how many drones they need.
+ */
 public class Main {
+    /**
+     *Start of all of the treads
+     * @param args
+     */
     public static void main(String[] args) {
-        //TIP Press <shortcut actionId="ShowIntentionActions"/> with your caret at the highlighted text
-        // to see how IntelliJ IDEA suggests fixing it.
-        System.out.printf("Hello and welcome!");
-
-        for (int i = 1; i <= 5; i++) {
-            //TIP Press <shortcut actionId="Debug"/> to start debugging your code. We have set one <icon src="AllIcons.Debugger.Db_set_breakpoint"/> breakpoint
-            // for you, but you can always add more by pressing <shortcut actionId="ToggleLineBreakpoint"/>.
-            System.out.println("i = " + i);
-        }
+        LocalAreaNetwork LAN = new LocalAreaNetwork();
+        Thread scheduler = new Thread(new Scheduler(LAN));
+        Thread fireIncidentSystem = new Thread(new FireIncidentSubsystem(LAN, "src/resources/Sample_event_file.csv"));
+        Thread droneSubsystem = new Thread(new DroneSubsytem(LAN, 1));
+        scheduler.start();
+        fireIncidentSystem.start();
+        droneSubsystem.start();
+        System.out.println("The drone system has been deployed. Waiting on instructions to proceed further.\n");
     }
 }
