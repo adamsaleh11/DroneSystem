@@ -8,6 +8,7 @@ public class DroneSubsytem implements Runnable {
     private final LocalAreaNetwork lan;
     private final int droneID;
     private volatile boolean shouldRun = true;
+    private String status = "IDLE";
 
     DroneSubsytem(LocalAreaNetwork lan, int droneID) {
         this.lan = lan;
@@ -54,5 +55,13 @@ public class DroneSubsytem implements Runnable {
                 lan.notifyAll();
             }
         }
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
     }
 }

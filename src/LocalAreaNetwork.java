@@ -1,3 +1,4 @@
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -10,7 +11,7 @@ public class LocalAreaNetwork {
     private List<Incident> incidents; //queue for Incidents from fire incident subsystem
     private List<String> droneMessages; //queue for drone logs
     private List<Incident> droneQueue;//queue for incidents assigned to drones
-    private List<String> droneStatus; // index will be for drone id, strings will be status: IDLE, WORKING, MOVING.
+    private List<DroneSubsytem> drones; // index will be for drone id, strings will be status: IDLE, WORKING, MOVING.
 
 
     public LocalAreaNetwork() {
@@ -109,6 +110,18 @@ public class LocalAreaNetwork {
             return true;
         }
         return false;
+    }
+
+    public List<DroneSubsytem> getIdleDrone() {
+        List<DroneSubsytem> idleDroneIds = new ArrayList<>();
+
+        for (int i = 0; i < drones.size(); i++) {
+            if ("IDLE".equals(drones.get(i).getStatus())) {  // Improved string comparison
+                idleDroneIds.add(drones.get(i));
+            }
+        }
+
+        return idleDroneIds;
     }
 
     /**method to get number of incidents

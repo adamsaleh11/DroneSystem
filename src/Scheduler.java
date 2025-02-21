@@ -13,6 +13,11 @@ public class Scheduler extends Thread {
         shouldRun = false;
     }
 
+    public void scheduleDrone(Incident incident) {
+
+    }
+
+
     /**This method runs the scheduler thread, it switches
      * between checking for incidents and checking for drone messages
      */
@@ -36,7 +41,7 @@ public class Scheduler extends Thread {
                  */
                 Incident incident = lan.getIncident();
                 if (incident != null) {
-                    lan.assignIncident(incident);
+                    scheduleDrone(incident);
                 }
                 lan.notifyAll();
             }
