@@ -9,7 +9,9 @@ import java.util.List;
 public class LocalAreaNetwork {
     private List<Incident> incidents; //queue for Incidents from fire incident subsystem
     private List<String> droneMessages; //queue for drone logs
-    private List<Incident> droneQueue; //queue for incidents assigned to drones
+    private List<Incident> droneQueue;//queue for incidents assigned to drones
+    private List<String> droneStatus; // index will be for drone id, strings will be status: IDLE, WORKING, MOVING.
+
 
     public LocalAreaNetwork() {
         this.incidents = new LinkedList<>();
