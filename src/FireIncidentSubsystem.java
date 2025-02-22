@@ -89,7 +89,7 @@ public class FireIncidentSubsystem implements Runnable {
     private void sendFireAlert(Incident fire) {
         try {
             InetAddress address = InetAddress.getLocalHost();
-            String message = "FIRE," + fire.getZoneId() + "," + fire.getSeverity();
+            String message = "FIRE," + fire.getZone() + "," + fire.getSeverity();
             byte[] buffer = message.getBytes();
             DatagramPacket packet = new DatagramPacket(buffer, buffer.length, address, SCHEDULER_PORT);
             socket.send(packet);
@@ -129,10 +129,10 @@ public class FireIncidentSubsystem implements Runnable {
                 try {
                     Thread.sleep(5000); 
                     for (Incident fire : activeFires) {
-                        if (fire.getSeverity() < 10) {
-                            fire.increaseSeverity();
-                            sendFireAlert(fire); 
-                        }
+//                        if (fire.getSeverity() < 10) {
+//                            fire.increaseSeverity();
+//                            sendFireAlert(fire);
+//                        }
                     }
                 } catch (InterruptedException e) {
                     e.printStackTrace();
