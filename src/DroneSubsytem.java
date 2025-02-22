@@ -48,8 +48,8 @@ public class DroneSubsytem implements Runnable {
                         /**
                          * Simulate the drone going to the location and back. Round trip
                          */
-                        setState(DroneState.EN_ROUTE);
                         System.out.println(lan.getDroneMessage());
+                        setState(DroneState.EN_ROUTE);
                         Thread.sleep(3500);
                         setState(DroneState.DROPPING_AGENT);
                         Thread.sleep(2000);

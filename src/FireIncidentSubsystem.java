@@ -89,7 +89,7 @@ public class FireIncidentSubsystem implements Runnable {
     private void sendFireAlert(Incident fire) {
         try {
             InetAddress address = InetAddress.getLocalHost();
-            String message = "FIRE," + fire.getZoneId() + "," + fire.getSeverity();
+            String message = "FIRE," + fire.getZone() + "," + fire.getSeverity();
             byte[] buffer = message.getBytes();
             DatagramPacket packet = new DatagramPacket(buffer, buffer.length, address, SCHEDULER_PORT);
             socket.send(packet);
