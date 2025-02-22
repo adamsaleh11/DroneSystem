@@ -1,4 +1,7 @@
-class Zone {
+/**
+ * This class represents a zone.
+ */
+public class Zone {
     private int id;
     private int startX, startY, endX, endY;
 

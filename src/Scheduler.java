@@ -20,27 +20,28 @@ public class Scheduler extends Thread {
         DroneSubsytem bestDrone = null;
         int zoneId = incident.getZone();
         Zone zone = lan.getZone(zoneId);
-
+        if (zone == null) {
+            System.out.println("No zone found for Zone ID: " + zoneId + ". Cannot schedule incident.");
+            return;
+        }
         int zoneCenterX = (zone.getStartX() + zone.getEndX()) / 2;
         int zoneCenterY = (zone.getStartY() + zone.getEndY()) / 2;
-
         double bestDistance = Double.MAX_VALUE;
-
         for (DroneSubsytem drone : drones) {
             int droneX = drone.getXCord();
             int droneY = drone.getYCord();
-
             double distance = Math.sqrt(Math.pow(droneX - zoneCenterX, 2) + Math.pow(droneY - zoneCenterY, 2));
-
             if (distance < bestDistance) {
                 bestDistance = distance;
                 bestDrone = drone;
             }
         }
-
-        lan.assignIncident(bestDrone,incident);
+        if(bestDrone != null) {
+            lan.assignIncident(bestDrone, incident);
+        } else {
+            System.out.println("No idle drone available to assign the incident.");
+        }
     }
-
 
     /**This method runs the scheduler thread, it switches
      * between checking for incidents and checking for drone messages
@@ -69,17 +70,10 @@ public class Scheduler extends Thread {
                 }
                 lan.notifyAll();
             }
-
-            synchronized (lan) {
-                while (lan.getDroneMessage() == null) {
-                    try {
-                        lan.wait();
-                    } catch (InterruptedException e) {
-                        Thread.currentThread().interrupt();
-                        return;
-                    }
-                }
-                lan.notifyAll();
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
             }
         }
     }

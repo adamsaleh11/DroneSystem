@@ -17,7 +17,6 @@ public class DroneSubsytem implements Runnable {
         this.droneID = droneID;
         this.xCord = 0;
         this.yCord = 0;
-
     }
 
     public void stop() {
@@ -32,7 +31,7 @@ public class DroneSubsytem implements Runnable {
                  * This block code checks to see if incidents are available. If not it will wait()
                  * but if there are it will send the drone to the location and print a message
                  */
-                while (lan.cleanZone() && currentState == DroneState.IDLE) {
+                while (lan.getDroneQueue().isEmpty() && currentState == DroneState.IDLE) {
                     try {
                         lan.wait();
                     } catch (InterruptedException e) {
@@ -43,20 +42,20 @@ public class DroneSubsytem implements Runnable {
                 /**
                  * Drone id is used to differeniate threads and incidents
                  */
-                if(lan.sendDrone(this.droneID)) {
+                if (lan.sendDrone(this.droneID)) {
                     try {
-                        /**
-                         * Simulate the drone going to the location and back. Round trip
-                         */
-                        System.out.println(lan.getDroneMessage());
+                        System.out.print(lan.getDroneMessage() + "\n");
                         setState(DroneState.EN_ROUTE);
+                        System.out.println("Drone " + droneID + " is EN_ROUTE to the incident location.");
                         Thread.sleep(3500);
                         setState(DroneState.DROPPING_AGENT);
+                        System.out.println("Drone " + droneID + " is dropping fire suppression agent.");
                         Thread.sleep(2000);
                         setState(DroneState.RETURNING);
+                        System.out.println("Drone " + droneID + " is returning to base.");
                         Thread.sleep(3500);
                         setState(DroneState.IDLE);
-                        System.out.println(lan.printDroneSuccess());
+                        System.out.println(lan.printDroneSuccess() + "\n");
                     } catch (InterruptedException e) {
                         Thread.currentThread().interrupt();
                     }

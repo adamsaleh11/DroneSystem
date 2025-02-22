@@ -36,37 +36,33 @@ public class Incident {
     public String getTime() {
         return this.time;
     }
-
     public int getZone() {
         return this.zoneID;
     }
-
     public String getEventType() {
         return this.eventType;
     }
     public String getSeverity() {
         return this.severity;
     }
-
     public int getSeverityNum() {
-        return switch (severity) {
-            case "high" -> 3;
-            case "medium" -> 2;
-            case "low" -> 1;
-            default -> 0;
-    };
+        if (severity.equalsIgnoreCase("High") || severity.equals("3"))
+            return 3;
+        else if (severity.equalsIgnoreCase("Moderate") || severity.equals("2"))
+            return 2;
+        else if (severity.equalsIgnoreCase("Low") || severity.equals("1"))
+            return 1;
+        else
+            return 0;
     }
-
     public int getWaterAmountNeeded() {
         return this.waterAmountNeeded;
     }
     public void print() {
-        System.out.println("Time: "+this.getTime()+
-                "\nZone Id: " +this.getZone()+
-                "\nEvent type: "+this.getEventType() +
-                "\nSeverity: "+ this.getSeverity() +
-                "\nWater needed: "+this.getWaterAmountNeeded() + "L\n");
+        System.out.println("Time: " + this.getTime() +
+                "\nZone ID: " + this.getZone() +
+                "\nEvent Type: " + this.getEventType() +
+                "\nSeverity: " + this.getSeverity() +
+                "\nWater Needed: " + this.getWaterAmountNeeded() + "L\n");
     }
-
 }
-

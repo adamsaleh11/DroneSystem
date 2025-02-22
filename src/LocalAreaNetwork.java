@@ -18,7 +18,8 @@ public class LocalAreaNetwork {
         this.incidents = new LinkedList<>();
         this.droneMessages = new LinkedList<>();
         this.droneQueue = new LinkedList<>();
-
+        this.drones = new ArrayList<>();
+        this.zones = new ArrayList<>();
     }
 
     public List<String> getDroneMessages() {
@@ -54,16 +55,7 @@ public class LocalAreaNetwork {
         if (incidents.isEmpty()) {
             return null;
         }
-        Incident highestSeverityIncident = incidents.getLast();
-        int highestIndex = 0;
-
-        for (int i = 1; i < incidents.size(); i++){
-            if(incidents.get(i).getSeverityNum() > highestSeverityIncident.getSeverityNum()) {
-                highestSeverityIncident = incidents.get(i);
-                highestIndex = i;
-            }
-        }
-        return incidents.remove(highestIndex);
+        return incidents.removeLast();
     }
 
     public List<Incident> getIncidents() {
@@ -95,10 +87,10 @@ public class LocalAreaNetwork {
      * @param incident
      */
     public synchronized void assignIncident(DroneSubsytem drone, Incident incident) {
-        System.out.println("Sending incident to available drone.");
-        System.out.println("##### Incident Assigned to drone ######");
-        incident.print();
-        droneQueue.add(drone.getDroneID(), incident);
+        System.out.println("Incident assigned to drone.");
+        String msg = printIncidentDetails(incident, drone.getDroneID());
+        droneQueue.addLast(incident);
+        droneMessages.add(msg);
         notify();
     }
 
@@ -119,8 +111,8 @@ public class LocalAreaNetwork {
         if (!droneQueue.isEmpty()) {
             Incident currentAssignment = droneQueue.removeLast();
             String droneMessage = printIncidentDetails(currentAssignment, droneId);
+            droneMessages.clear();
             droneMessages.add(droneMessage);
-            //System.out.println(droneMessage);
             notifyAll();
             return true;
         }
@@ -129,9 +121,9 @@ public class LocalAreaNetwork {
 
     public List<DroneSubsytem> getIdleDrone() {
         List<DroneSubsytem> idleDroneIds = new ArrayList<>();
-        for (int i = 0; i < drones.size(); i++) {
-            if ((drones.get(i).getCurrentState().equals(DroneSubsytem.DroneState.IDLE))) {  // Improved string comparison
-                idleDroneIds.add(drones.get(i));
+        for (DroneSubsytem drone : drones) {
+            if (drone.getCurrentState() == DroneSubsytem.DroneState.IDLE) {
+                idleDroneIds.add(drone);
             }
         }
         return idleDroneIds;
@@ -154,24 +146,29 @@ public class LocalAreaNetwork {
     }
 
     public String printIncidentDetails(Incident incident, int droneID) {
-        return  "Sending Drone "+ droneID + " to: \n" +
+        return  "Sending Drone " + droneID + " to: \n" +
                 "####INCIDENT####\n" +
                 "Time: " + incident.getTime() + "\n" +
                 "Zone ID: " + incident.getZone() + "\n" +
                 "Event Type: " + incident.getEventType() + "\n" +
-                "Severity: " + incident.getSeverity() + "\n" +
+                "Severity: " + incident.getSeverityNum() + "\n" +
                 "Water Needed: " + incident.getWaterAmountNeeded() + "L\n";
     }
+
     public synchronized String printDroneSuccess() {
-        return "DRONE SUCCESSFULLY COMPLETED & RETURNED FROM INCIDENT\n";
+        return "DRONE SUCCESSFULLY COMPLETED & RETURNED FROM INCIDENT";
     }
 
     public Zone getZone(int id) {
-        for(int i = 0; i < zones.size(); i++) {
-            if(zones.get(i).getId() == id) {
-                return zones.get(i);
+        for (Zone zone : zones) {
+            if(zone.getId() == id) {
+                return zone;
             }
         }
         return null;
+    }
+
+    public synchronized void addDrone(DroneSubsytem drone) {
+        drones.add(drone);
     }
 }
