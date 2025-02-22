@@ -20,7 +20,6 @@ public class Incident {
         this.zoneID = zoneID;
         this.eventType = eventType;
         this.severity = severity;
-        //Apply logic to determine amount of water needed. Could be in data or set based on severity level.
         switch (this.severity){
             case "Low":
                 this.waterAmountNeeded = 10;

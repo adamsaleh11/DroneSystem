@@ -84,9 +84,9 @@ public class DroneSubsytem implements Runnable {
      * Enum representing the possible states of a drone.
      */
     enum DroneState {
-        IDLE,           // Drone is waiting for assignments
-        EN_ROUTE,       // Drone is traveling to the incident location
-        DROPPING_AGENT, // Drone is dropping fire suppression agent
-        RETURNING       // Drone is returning to base
+        IDLE,
+        EN_ROUTE,
+        DROPPING_AGENT,
+        RETURNING
     }
 }

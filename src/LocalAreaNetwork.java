@@ -8,10 +8,10 @@ import java.util.List;
  * with eachother.
  */
 public class LocalAreaNetwork {
-    private List<Incident> incidents; //queue for Incidents from fire incident subsystem
-    private List<String> droneMessages; //queue for drone logs
-    private List<Incident> droneQueue;//queue for incidents assigned to drones
-    private List<DroneSubsytem> drones; // index will be for drone id, strings will be status: IDLE, WORKING, MOVING.
+    private List<Incident> incidents;
+    private List<String> droneMessages;
+    private List<Incident> droneQueue;
+    private List<DroneSubsytem> drones;
     private List<Zone> zones;
 
     public LocalAreaNetwork() {
