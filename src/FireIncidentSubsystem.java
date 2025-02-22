@@ -1,5 +1,4 @@
 import java.io.*;
-import java.net.*;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -7,9 +6,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * FireIncidentSubsystem - Simulates fire incidents and interacts with the Scheduler.
  */
 public class FireIncidentSubsystem implements Runnable {
-    private static final int SCHEDULER_PORT = 5001; 
-    private static final int INCIDENT_PORT = 5002; 
-    private DatagramSocket socket;
     private CopyOnWriteArrayList<Incident> activeFires;
     private Map<Integer, String> fireZones;
     private final LocalAreaNetwork lan;
@@ -21,11 +17,6 @@ public class FireIncidentSubsystem implements Runnable {
         activeFires = new CopyOnWriteArrayList<>();
         fireZones = new HashMap<>();
         loadFireZones(csvFile);
-        try {
-            socket = new DatagramSocket(INCIDENT_PORT);
-        } catch (SocketException e) {
-            e.printStackTrace();
-        }
     }
 
     @Override
@@ -53,7 +44,7 @@ public class FireIncidentSubsystem implements Runnable {
     }
 
     /**
-     * Reads fire incidents from the CSV file and sends them to the scheduler.
+     * Reads fire incidents from the CSV file and stores them in activeFires.
      */
     private void readIncidentsFromCSV() {
         try (BufferedReader br = new BufferedReader(new FileReader(csvFile))) {
@@ -69,31 +60,8 @@ public class FireIncidentSubsystem implements Runnable {
                 String severity = data[3];
 
                 Incident incident = new Incident(time, zoneID, eventType, severity);
-                
-                synchronized (lan) {
-                    System.out.println("Reading report logs from CSV");
-                    lan.addIncident(incident);
-                    lan.notifyAll();
-                }
-
-                Thread.sleep(500); 
+                activeFires.add(incident);
             }
-        } catch (IOException | InterruptedException e) {
-            e.printStackTrace();
-        }
-    }
-
-    /**
-     * Sends a fire alert to the Scheduler via UDP.
-     */
-    private void sendFireAlert(Incident fire) {
-        try {
-            InetAddress address = InetAddress.getLocalHost();
-            String message = "FIRE," + fire.getZone() + "," + fire.getSeverity();
-            byte[] buffer = message.getBytes();
-            DatagramPacket packet = new DatagramPacket(buffer, buffer.length, address, SCHEDULER_PORT);
-            socket.send(packet);
-            System.out.println("[FireIncidentSubsystem] Sent fire alert: " + message);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -107,12 +75,11 @@ public class FireIncidentSubsystem implements Runnable {
             Random rand = new Random();
             while (true) {
                 try {
-                    Thread.sleep(rand.nextInt(10000) + 5000); 
+                    Thread.sleep(rand.nextInt(10000) + 5000);
                     int zoneId = (int) fireZones.keySet().toArray()[rand.nextInt(fireZones.size())];
-                    String severity = String.valueOf(rand.nextInt(5) + 1); 
+                    String severity = String.valueOf(rand.nextInt(5) + 1);
                     Incident fire = new Incident("Random", zoneId, "Fire", severity);
                     activeFires.add(fire);
-                    sendFireAlert(fire);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
@@ -121,18 +88,15 @@ public class FireIncidentSubsystem implements Runnable {
     }
 
     /**
-     * Monitors and escalates fire severity over time.
+     * Monitors fire incidents and logs their severity over time.
      */
     public void monitorFireSeverity() {
         new Thread(() -> {
             while (true) {
                 try {
-                    Thread.sleep(5000); 
+                    Thread.sleep(5000);
                     for (Incident fire : activeFires) {
-                        if (fire.getSeverity() < 10) {
-                            fire.increaseSeverity();
-                            sendFireAlert(fire); 
-                        }
+                        System.out.println("Monitoring fire at zone " + fire.getZone() + " with severity: " + fire.getSeverity());
                     }
                 } catch (InterruptedException e) {
                     e.printStackTrace();
