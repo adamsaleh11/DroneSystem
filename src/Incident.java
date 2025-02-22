@@ -57,5 +57,6 @@ public class Incident {
                 "\nSeverity: "+ this.getSeverity() +
                 "\nWater needed: "+this.getWaterAmountNeeded() + "L\n");
     }
+
 }
 

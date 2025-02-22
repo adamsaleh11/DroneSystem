@@ -8,7 +8,7 @@ public class DroneSubsytem implements Runnable {
     private final LocalAreaNetwork lan;
     private final int droneID;
     private volatile boolean shouldRun = true;
-    private String status = "IDLE";
+    private DroneState currentState = DroneState.IDLE;
     private int xCord;
     private int yCord;
 
@@ -32,7 +32,7 @@ public class DroneSubsytem implements Runnable {
                  * This block code checks to see if incidents are available. If not it will wait()
                  * but if there are it will send the drone to the location and print a message
                  */
-                while (lan.cleanZone()) {
+                while (lan.cleanZone() && currentState == DroneState.IDLE) {
                     try {
                         lan.wait();
                     } catch (InterruptedException e) {
@@ -48,8 +48,14 @@ public class DroneSubsytem implements Runnable {
                         /**
                          * Simulate the drone going to the location and back. Round trip
                          */
+                        setState(DroneState.EN_ROUTE);
                         System.out.println(lan.getDroneMessage());
                         Thread.sleep(3500);
+                        setState(DroneState.DROPPING_AGENT);
+                        Thread.sleep(2000);
+                        setState(DroneState.RETURNING);
+                        Thread.sleep(3500);
+                        setState(DroneState.IDLE);
                         System.out.println(lan.printDroneSuccess());
                     } catch (InterruptedException e) {
                         Thread.currentThread().interrupt();
@@ -61,15 +67,26 @@ public class DroneSubsytem implements Runnable {
             }
         }
     }
-
-    public String getStatus() {
-        return status;
+    /**
+     * Sets the current state of the drone.
+     *
+     * @param newState The new state to transition to.
+     */
+    private void setState(DroneState newState) {
+        this.currentState = newState;
+        System.out.println("Drone " + droneID + " state changed to: " + newState);
     }
-
     public int getXCord() {return  xCord;}
     public int getYCord() {return  yCord;}
+    public DroneState getCurrentState() { return  currentState;}
 
-    public void setStatus(String status) {
-        this.status = status;
+    /**
+     * Enum representing the possible states of a drone.
+     */
+    enum DroneState {
+        IDLE,           // Drone is waiting for assignments
+        EN_ROUTE,       // Drone is traveling to the incident location
+        DROPPING_AGENT, // Drone is dropping fire suppression agent
+        RETURNING       // Drone is returning to base
     }
 }
