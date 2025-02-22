@@ -9,10 +9,15 @@ public class DroneSubsytem implements Runnable {
     private final int droneID;
     private volatile boolean shouldRun = true;
     private String status = "IDLE";
+    private int xCord;
+    private int yCord;
 
     DroneSubsytem(LocalAreaNetwork lan, int droneID) {
         this.lan = lan;
         this.droneID = droneID;
+        this.xCord = 0;
+        this.yCord = 0;
+
     }
 
     public void stop() {
@@ -60,6 +65,9 @@ public class DroneSubsytem implements Runnable {
     public String getStatus() {
         return status;
     }
+
+    public int getXCord() {return  xCord;}
+    public int getYCord() {return  yCord;}
 
     public void setStatus(String status) {
         this.status = status;
