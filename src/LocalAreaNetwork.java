@@ -129,13 +129,11 @@ public class LocalAreaNetwork {
 
     public List<DroneSubsytem> getIdleDrone() {
         List<DroneSubsytem> idleDroneIds = new ArrayList<>();
-
         for (int i = 0; i < drones.size(); i++) {
-            if ("IDLE".equals(drones.get(i).getCurrentState())) {  // Improved string comparison
+            if ((drones.get(i).getCurrentState().equals(DroneSubsytem.DroneState.IDLE))) {  // Improved string comparison
                 idleDroneIds.add(drones.get(i));
             }
         }
-
         return idleDroneIds;
     }
 
