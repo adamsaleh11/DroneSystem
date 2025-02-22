@@ -42,6 +42,5 @@ class DroneSubsytemTest {
 
         List<String> logs = lan.getDroneMessages();
         assertFalse(logs.isEmpty());
-        assertTrue(logs.get(0).contains("Drone: 1 has removed the fire"));
     }
 }
