@@ -78,6 +78,7 @@ public class DroneSubsytem implements Runnable {
     }
     public int getXCord() {return  xCord;}
     public int getYCord() {return  yCord;}
+    public int getDroneID() {return droneID;}
     public DroneState getCurrentState() { return  currentState;}
 
     /**

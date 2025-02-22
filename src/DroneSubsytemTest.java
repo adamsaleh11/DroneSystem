@@ -29,7 +29,8 @@ class DroneSubsytemTest {
     void testDroneRemovesFireAndLogsIt() throws InterruptedException {
         // Run actual methods
         Incident incident = new Incident("1",1,"1","1");
-        lan.assignIncident(incident);
+        DroneSubsytem drone = new DroneSubsytem(lan, 1);
+        lan.assignIncident(drone,incident);
 
         droneThread = new Thread(droneSubsystem);
         droneThread.start();

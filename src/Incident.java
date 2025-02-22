@@ -47,6 +47,16 @@ public class Incident {
     public String getSeverity() {
         return this.severity;
     }
+
+    public int getSeverityNum() {
+        return switch (severity) {
+            case "high" -> 3;
+            case "medium" -> 2;
+            case "low" -> 1;
+            default -> 0;
+    };
+    }
+
     public int getWaterAmountNeeded() {
         return this.waterAmountNeeded;
     }

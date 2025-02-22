@@ -20,7 +20,7 @@ public class FireIncidentSubsystem implements Runnable {
         this.csvFile = csvFile;
         activeFires = new CopyOnWriteArrayList<>();
         fireZones = new HashMap<>();
-        loadFireZones(csvFile);
+        this.lan.setZones(loadFireZones(csvFile));
         try {
             socket = new DatagramSocket(INCIDENT_PORT);
         } catch (SocketException e) {
@@ -38,19 +38,34 @@ public class FireIncidentSubsystem implements Runnable {
     /**
      * Loads fire zones from a CSV file.
      */
-    private void loadFireZones(String filePath) {
+    private static List<Zone> loadFireZones(String filePath) {
+        List<Zone> zones = new ArrayList<>();
+
         try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
             String line;
             while ((line = br.readLine()) != null) {
                 String[] parts = line.split(",");
-                if (parts.length == 2) {
-                    fireZones.put(Integer.parseInt(parts[0]), parts[1]);
+                if (parts.length == 3) {
+                    int id = Integer.parseInt(parts[0].trim());
+
+                    String[] startCoords = parts[1].trim().replace("(", "").replace(")", "").split(";");
+                    String[] endCoords = parts[2].trim().replace("(", "").replace(")", "").split(";");
+
+                    int startX = Integer.parseInt(startCoords[0].trim());
+                    int startY = Integer.parseInt(startCoords[1].trim());
+                    int endX = Integer.parseInt(endCoords[0].trim());
+                    int endY = Integer.parseInt(endCoords[1].trim());
+
+                    zones.add(new Zone(id, startX, startY, endX, endY));
                 }
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+        return zones;
     }
+
 
     /**
      * Reads fire incidents from the CSV file and sends them to the scheduler.
@@ -89,7 +104,7 @@ public class FireIncidentSubsystem implements Runnable {
     private void sendFireAlert(Incident fire) {
         try {
             InetAddress address = InetAddress.getLocalHost();
-            String message = "FIRE," + fire.getZoneId() + "," + fire.getSeverity();
+            String message = "FIRE," + fire.getZone() + "," + fire.getSeverity();
             byte[] buffer = message.getBytes();
             DatagramPacket packet = new DatagramPacket(buffer, buffer.length, address, SCHEDULER_PORT);
             socket.send(packet);
@@ -129,10 +144,10 @@ public class FireIncidentSubsystem implements Runnable {
                 try {
                     Thread.sleep(5000); 
                     for (Incident fire : activeFires) {
-                        if (fire.getSeverity() < 10) {
-                            fire.increaseSeverity();
-                            sendFireAlert(fire); 
-                        }
+//                        if (fire.getSeverity() < 10) {
+//                            fire.increaseSeverity();
+//                            sendFireAlert(fire);
+//                        }
                     }
                 } catch (InterruptedException e) {
                     e.printStackTrace();

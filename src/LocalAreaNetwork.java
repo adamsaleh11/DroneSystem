@@ -12,7 +12,7 @@ public class LocalAreaNetwork {
     private List<String> droneMessages; //queue for drone logs
     private List<Incident> droneQueue;//queue for incidents assigned to drones
     private List<DroneSubsytem> drones; // index will be for drone id, strings will be status: IDLE, WORKING, MOVING.
-
+    private List<Zone> zones;
 
     public LocalAreaNetwork() {
         this.incidents = new LinkedList<>();
@@ -29,7 +29,12 @@ public class LocalAreaNetwork {
         return droneQueue;
     }
 
-    /**method to add incident to incidents queue
+    public void setZones(List<Zone> zones) {
+        this.zones = zones;
+    }
+
+    /**
+     * method to add incident to incidents queue
      *
      * @param incident
      */
@@ -40,7 +45,8 @@ public class LocalAreaNetwork {
         notifyAll();
     }
 
-    /**method to take one incident form the incidents queue
+    /**
+     * method to take one incident form the incidents queue
      *
      * @return
      */
@@ -48,7 +54,16 @@ public class LocalAreaNetwork {
         if (incidents.isEmpty()) {
             return null;
         }
-        return incidents.removeLast();
+        Incident highestSeverityIncident = incidents.getLast();
+        int highestIndex = 0;
+
+        for (int i = 1; i < incidents.size(); i++){
+            if(incidents.get(i).getSeverityNum() > highestSeverityIncident.getSeverityNum()) {
+                highestSeverityIncident = incidents.get(i);
+                highestIndex = i;
+            }
+        }
+        return incidents.remove(highestIndex);
     }
 
     public List<Incident> getIncidents() {
@@ -79,11 +94,11 @@ public class LocalAreaNetwork {
      *
      * @param incident
      */
-    public synchronized void assignIncident(Incident incident) {
+    public synchronized void assignIncident(DroneSubsytem drone, Incident incident) {
         System.out.println("Sending incident to available drone.");
         System.out.println("##### Incident Assigned to drone ######");
         incident.print();
-        droneQueue.add(incident);
+        droneQueue.add(drone.getDroneID(), incident);
         notify();
     }
 
@@ -116,7 +131,7 @@ public class LocalAreaNetwork {
         List<DroneSubsytem> idleDroneIds = new ArrayList<>();
 
         for (int i = 0; i < drones.size(); i++) {
-            if ("IDLE".equals(drones.get(i).getStatus())) {  // Improved string comparison
+            if ("IDLE".equals(drones.get(i).getCurrentState())) {  // Improved string comparison
                 idleDroneIds.add(drones.get(i));
             }
         }
@@ -151,5 +166,14 @@ public class LocalAreaNetwork {
     }
     public synchronized String printDroneSuccess() {
         return "DRONE SUCCESSFULLY COMPLETED & RETURNED FROM INCIDENT\n";
+    }
+
+    public Zone getZone(int id) {
+        for(int i = 0; i < zones.size(); i++) {
+            if(zones.get(i).getId() == id) {
+                return zones.get(i);
+            }
+        }
+        return null;
     }
 }

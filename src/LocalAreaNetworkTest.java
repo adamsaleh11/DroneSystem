@@ -24,7 +24,9 @@ class LocalAreaNetworkTest {
     void testAssignIncident() {
         var localAreaNetwork = new LocalAreaNetwork();
         Incident incident = new Incident("10",10,"10","10");
-        localAreaNetwork.assignIncident(incident);
+        LocalAreaNetwork lan = new LocalAreaNetwork();
+        DroneSubsytem drone = new DroneSubsytem(lan, 1);
+        localAreaNetwork.assignIncident(drone ,incident);
         assertEquals(1, localAreaNetwork.getDroneQueue().size());
     }
 
@@ -32,7 +34,9 @@ class LocalAreaNetworkTest {
     void testSendDrone() {
         var localAreaNetwork = new LocalAreaNetwork();
         Incident incident = new Incident("10",10,"10","10");
-        localAreaNetwork.assignIncident(incident);
+        LocalAreaNetwork lan = new LocalAreaNetwork();
+        DroneSubsytem drone = new DroneSubsytem(lan, 1);
+        localAreaNetwork.assignIncident(drone ,incident);
         assertTrue(localAreaNetwork.sendDrone(1));
     }
 

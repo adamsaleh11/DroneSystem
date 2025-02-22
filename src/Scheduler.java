@@ -1,5 +1,7 @@
+import java.util.List;
+
 public class Scheduler extends Thread {
-    private final LocalAreaNetwork lan; //Sharred Memory for Threads
+    private final LocalAreaNetwork lan; //Shared Memory for Threads
     private volatile boolean shouldRun = true; //Flag for testing
 
     public Scheduler(LocalAreaNetwork lan) {
@@ -14,7 +16,29 @@ public class Scheduler extends Thread {
     }
 
     public void scheduleDrone(Incident incident) {
+        List<DroneSubsytem> drones = lan.getIdleDrone();
+        DroneSubsytem bestDrone = null;
+        int zoneId = incident.getZone();
+        Zone zone = lan.getZone(zoneId);
 
+        int zoneCenterX = (zone.getStartX() + zone.getEndX()) / 2;
+        int zoneCenterY = (zone.getStartY() + zone.getEndY()) / 2;
+
+        double bestDistance = Double.MAX_VALUE;
+
+        for (DroneSubsytem drone : drones) {
+            int droneX = drone.getXCord();
+            int droneY = drone.getYCord();
+
+            double distance = Math.sqrt(Math.pow(droneX - zoneCenterX, 2) + Math.pow(droneY - zoneCenterY, 2));
+
+            if (distance < bestDistance) {
+                bestDistance = distance;
+                bestDrone = drone;
+            }
+        }
+
+        lan.assignIncident(bestDrone,incident);
     }
 
 
