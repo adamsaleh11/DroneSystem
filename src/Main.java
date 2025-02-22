@@ -37,7 +37,6 @@ public class Main {
             String line = br.readLine();
             while ((line = br.readLine()) != null) {
                 String[] parts = line.split(",");
-                if (parts.length < 3) continue;
                 int zoneID = Integer.parseInt(parts[0].trim());
                 String startStr = parts[1].trim();
                 startStr = startStr.substring(1, startStr.length() - 1);
