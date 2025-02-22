@@ -66,7 +66,7 @@ public class FireIncidentSubsystem implements Runnable {
                 String time = data[0];
                 int zoneID = Integer.parseInt(data[1]);
                 String eventType = data[2];
-                int severity = Integer.parseInt(data[3]);
+                String severity = data[3];
 
                 Incident incident = new Incident(time, zoneID, eventType, severity);
                 
@@ -109,7 +109,7 @@ public class FireIncidentSubsystem implements Runnable {
                 try {
                     Thread.sleep(rand.nextInt(10000) + 5000); 
                     int zoneId = (int) fireZones.keySet().toArray()[rand.nextInt(fireZones.size())];
-                    int severity = rand.nextInt(5) + 1; 
+                    String severity = String.valueOf(rand.nextInt(5) + 1); 
                     Incident fire = new Incident("Random", zoneId, "Fire", severity);
                     activeFires.add(fire);
                     sendFireAlert(fire);
@@ -140,25 +140,4 @@ public class FireIncidentSubsystem implements Runnable {
             }
         }).start();
     }
-}
-
-/**
- * Incident class representing fire incidents.
- */
-class Incident {
-    private String time;
-    private int zoneId;
-    private String eventType;
-    private int severity;
-
-    public Incident(String time, int zoneId, String eventType, int severity) {
-        this.time = time;
-        this.zoneId = zoneId;
-        this.eventType = eventType;
-        this.severity = severity;
-    }
-
-    public int getZoneId() { return zoneId; }
-    public int getSeverity() { return severity; }
-    public void increaseSeverity() { severity++; }
 }
