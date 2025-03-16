@@ -16,6 +16,10 @@ public class FireIncidentSubsystem implements Runnable {
         shouldRun = false;
     }
 
+    public boolean isRunning() {
+        return shouldRun;
+    }
+
     @Override
     public void run() {
         if (shouldRun) {

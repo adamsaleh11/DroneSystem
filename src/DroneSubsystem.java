@@ -109,11 +109,9 @@ public class DroneSubsystem implements Runnable {
         try {
             while (shouldRun) {
                 if (isAvailable.get()) {
-                    // Only register if drone is available
                     registerWithScheduler();
                 }
 
-                // Send status update every few seconds
                 Thread.sleep(5000);
             }
         } catch (InterruptedException e) {
@@ -201,5 +199,21 @@ public class DroneSubsystem implements Runnable {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    public boolean isRunning() {
+        return shouldRun;
+    }
+
+    public int getDroneID() {
+        return droneID;
+    }
+
+    public int getXPosition() {
+        return xPosition;
+    }
+
+    public int getYPosition() {
+        return yPosition;
     }
 }

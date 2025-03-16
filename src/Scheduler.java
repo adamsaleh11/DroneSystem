@@ -152,6 +152,14 @@ public class Scheduler {
             idleDrones.add(drone);
         }
     }
+    public List<DroneInfo> getIdleDrones() {
+        return idleDrones;
+    }
+
+    public Queue<Incident> getPendingIncidents() {
+        return pendingIncidents;
+    }
+
 
     static class DroneInfo {
         int id, x, y;
