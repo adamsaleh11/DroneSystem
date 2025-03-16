@@ -116,11 +116,30 @@ public class Scheduler {
     }
 
     private void assignPendingIncidents() {
-        Iterator<Incident> iterator = pendingIncidents.iterator();
+        if (pendingIncidents.isEmpty() || idleDrones.isEmpty()) {
+            return;
+        }
+
+        List<Incident> sortedIncidents = new ArrayList<>(pendingIncidents);
+        sortedIncidents.sort(Comparator.comparingInt(this::getSeverityPriority).reversed());
+
+        Iterator<Incident> iterator = sortedIncidents.iterator();
         while (iterator.hasNext() && !idleDrones.isEmpty()) {
             Incident incident = iterator.next();
             assignDrone(incident);
-            iterator.remove();
+            pendingIncidents.remove(incident);
+        }
+    }
+
+    private int getSeverityPriority(Incident incident) {
+        switch (incident.getSeverity()) {
+            case "High":
+                return 3;
+            case "Moderate":
+                return 2;
+            case "Low":
+            default:
+                return 1;
         }
     }
 
