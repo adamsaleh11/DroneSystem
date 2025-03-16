@@ -187,7 +187,7 @@ public class DroneSubsystem implements Runnable {
             InetAddress schedulerAddress = InetAddress.getLocalHost();
 
             Random random = new Random();
-            for (int i = 1; i <= 3; i++) {
+            for (int i = 1; i <= 1; i++) {
                 int x = random.nextInt(100);
                 int y = random.nextInt(100);
 

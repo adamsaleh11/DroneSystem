@@ -7,6 +7,7 @@ public class Scheduler {
     private static final int SCHEDULER_PORT = 4000;
 
     private final List<DroneInfo> idleDrones = new ArrayList<>();
+    private final Queue<Incident> pendingIncidents = new LinkedList<>();
     private boolean shouldRun = true;
 
     public static void main(String[] args) {
@@ -17,9 +18,11 @@ public class Scheduler {
     public void start() {
         Thread receiveIncidents = new Thread(this::listenForIncidents);
         Thread receiveDrones = new Thread(this::listenForDroneUpdates);
+        Thread processIncidents = new Thread(this::processPendingIncidents);
 
         receiveIncidents.start();
         receiveDrones.start();
+        processIncidents.start();
 
         System.out.println("Scheduler started and listening for incidents and drone updates");
     }
@@ -43,7 +46,8 @@ public class Scheduler {
                     int zoneX = Integer.parseInt(parts[2]);
                     int zoneY = Integer.parseInt(parts[3]);
 
-                    assignDrone(zoneId, zoneX, zoneY, packet.getAddress());
+                    // Add the incident to the pending queue
+                    pendingIncidents.add(new Incident(zoneId, zoneX, zoneY, packet.getAddress()));
                 }
             }
         } catch (Exception e) {
@@ -87,6 +91,25 @@ public class Scheduler {
                 }
             }
         } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void processPendingIncidents() {
+        try {
+            while (shouldRun) {
+                // Try to assign drones to incidents when drones become available
+                synchronized (this) {
+                    if (!pendingIncidents.isEmpty() && !idleDrones.isEmpty()) {
+                        Incident incident = pendingIncidents.poll();
+                        assignDrone(incident.zoneId, incident.zoneX, incident.zoneY, incident.fireAddress);
+                    }
+                }
+
+                // Sleep to avoid busy-waiting
+                Thread.sleep(500);
+            }
+        } catch (InterruptedException e) {
             e.printStackTrace();
         }
     }
@@ -139,6 +162,18 @@ public class Scheduler {
             this.x = x;
             this.y = y;
             this.address = address;
+        }
+    }
+
+    static class Incident {
+        int zoneId, zoneX, zoneY;
+        InetAddress fireAddress;
+
+        Incident(int zoneId, int zoneX, int zoneY, InetAddress fireAddress) {
+            this.zoneId = zoneId;
+            this.zoneX = zoneX;
+            this.zoneY = zoneY;
+            this.fireAddress = fireAddress;
         }
     }
 }
