@@ -2,11 +2,12 @@ import java.net.*;
 import java.util.*;
 
 public class Scheduler {
-    private static final int FIRE_PORT = 5000; // FireSubsystem sends incidents here
-    private static final int DRONE_PORT = 6000; // Drones receive assignments here
-    private static final int SCHEDULER_PORT = 4000; // Listening for incidents
+    private static final int FIRE_PORT = 5000;
+    private static final int DRONE_PORT = 6000;
+    private static final int SCHEDULER_PORT = 4000;
 
     private final List<DroneInfo> idleDrones = new ArrayList<>();
+    private final Queue<Incident> pendingIncidents = new LinkedList<>();
     private boolean shouldRun = true;
 
     public static void main(String[] args) {
@@ -20,10 +21,14 @@ public class Scheduler {
 
         receiveIncidents.start();
         receiveDrones.start();
+
+        System.out.println("Scheduler started and listening for incidents and drone updates");
     }
 
     private void listenForIncidents() {
         try (DatagramSocket socket = new DatagramSocket(SCHEDULER_PORT)) {
+            System.out.println("Incident listener started on port " + SCHEDULER_PORT);
+
             while (shouldRun) {
                 byte[] buffer = new byte[1024];
                 DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
@@ -32,7 +37,6 @@ public class Scheduler {
                 String message = new String(packet.getData(), 0, packet.getLength());
                 System.out.println("Received Incident: " + message);
 
-                // Parse incident (Example format: "Incident,ZoneID,X,Y")
                 String[] parts = message.split(",");
                 if (parts.length == 4 && parts[0].equals("Incident")) {
                     int zoneId = Integer.parseInt(parts[1]);
@@ -49,6 +53,7 @@ public class Scheduler {
 
     private void listenForDroneUpdates() {
         try (DatagramSocket socket = new DatagramSocket(DRONE_PORT)) {
+            System.out.println("Drone listener started on port " + DRONE_PORT);
 
             while (shouldRun) {
                 byte[] buffer = new byte[1024];
@@ -58,14 +63,30 @@ public class Scheduler {
                 String message = new String(packet.getData(), 0, packet.getLength());
                 System.out.println("Received Drone Update: " + message);
 
-                // Parse drone info (Example format: "Drone,ID,X,Y")
                 String[] parts = message.split(",");
                 if (parts.length == 4 && parts[0].equals("Drone")) {
                     int id = Integer.parseInt(parts[1]);
                     int x = Integer.parseInt(parts[2]);
                     int y = Integer.parseInt(parts[3]);
 
-                    idleDrones.add(new DroneInfo(id, x, y, packet.getAddress()));
+                    boolean droneExists = false;
+                    for (DroneInfo existingDrone : idleDrones) {
+                        if (existingDrone.id == id) {
+                            existingDrone.x = x;
+                            existingDrone.y = y;
+                            droneExists = true;
+                            break;
+                        }
+                    }
+
+                    if (!droneExists) {
+                        DroneInfo newDrone = new DroneInfo(id, x, y, packet.getAddress());
+                        idleDrones.add(newDrone);
+                        System.out.println("Added new drone: ID=" + id + ", position=(" + x + "," + y + ")");
+
+                        // Try to assign pending incidents
+                        assignPendingIncidents();
+                    }
                 }
             }
         } catch (Exception e) {
@@ -89,7 +110,17 @@ public class Scheduler {
             idleDrones.remove(bestDrone);
             sendDroneAssignment(bestDrone, zoneId, zoneX, zoneY);
         } else {
-            System.out.println("No available drones for Zone " + zoneId);
+            System.out.println("No available drones for Zone " + zoneId + ", adding to pending incidents.");
+            pendingIncidents.add(new Incident(zoneId, zoneX, zoneY, fireAddress));
+        }
+    }
+
+    private void assignPendingIncidents() {
+        Iterator<Incident> iterator = pendingIncidents.iterator();
+        while (iterator.hasNext() && !idleDrones.isEmpty()) {
+            Incident incident = iterator.next();
+            assignDrone(incident.zoneId, incident.x, incident.y, incident.fireAddress);
+            iterator.remove();
         }
     }
 
@@ -97,15 +128,20 @@ public class Scheduler {
         try (DatagramSocket socket = new DatagramSocket()) {
             String message = "Assign," + zoneId + "," + x + "," + y;
             byte[] buffer = message.getBytes();
-            DatagramPacket packet = new DatagramPacket(buffer, buffer.length, drone.address, DRONE_PORT);
-            socket.send(packet);
 
+            DatagramPacket packet = new DatagramPacket(
+                    buffer, buffer.length,
+                    drone.address,
+                    DRONE_PORT + drone.id
+            );
+
+            socket.send(packet);
             System.out.println("Assigned Drone " + drone.id + " to Zone " + zoneId);
         } catch (Exception e) {
             e.printStackTrace();
+            idleDrones.add(drone);
         }
     }
-
 
     static class DroneInfo {
         int id, x, y;
@@ -116,6 +152,18 @@ public class Scheduler {
             this.x = x;
             this.y = y;
             this.address = address;
+        }
+    }
+
+    static class Incident {
+        int zoneId, x, y;
+        InetAddress fireAddress;
+
+        Incident(int zoneId, int x, int y, InetAddress fireAddress) {
+            this.zoneId = zoneId;
+            this.x = x;
+            this.y = y;
+            this.fireAddress = fireAddress;
         }
     }
 }

@@ -1,31 +1,36 @@
 import java.io.*;
+import java.net.*;
 
-/**
- * This class represents the fire incidents system. Its responsible for reading data, initializing it
- * as an incident and then adding the incident to the share ressource.
- */
+
 public class FireIncidentSubsystem implements Runnable {
-    private final LocalAreaNetwork lan;
+    private static final int SCHEDULER_PORT = 4000; // Port where scheduler listens for incidents
     private final String csvFile;
+    private final InetAddress schedulerAddress;
+    private volatile boolean shouldRun = true;
 
-    public FireIncidentSubsystem(LocalAreaNetwork lan, String csvFile) {
-        this.lan = lan;
+    public FireIncidentSubsystem(String csvFile, InetAddress schedulerAddress) {
         this.csvFile = csvFile;
+        this.schedulerAddress = schedulerAddress;
+    }
+
+    public void stop() {
+        shouldRun = false;
     }
 
     @Override
     public void run() {
-        readIncidentsFromCSV();
+        if (shouldRun) {
+            readIncidentsFromCSV();
+        }
     }
+
 
     private void readIncidentsFromCSV() {
         try (BufferedReader br = new BufferedReader(new FileReader(csvFile))) {
             String line;
             br.readLine();
-            /**
-             * This block reads a row from the csv and sends it to the scheduler
-             */
-            while ((line = br.readLine()) != null) {
+
+            while ((line = br.readLine()) != null && shouldRun) {
                 String[] data = line.split(",");
                 if (data.length < 4) continue;
 
@@ -34,20 +39,65 @@ public class FireIncidentSubsystem implements Runnable {
                 String eventType = data[2];
                 String severity = data[3];
 
-                Incident incident = new Incident(time, zoneID, eventType, severity);
-
-                synchronized (lan) {
-                    System.out.println("Reading report logs from csv");
-                    lan.addIncident(incident);
-                    lan.notifyAll();
+                int x = 0, y = 0;
+                if (data.length >= 6) {
+                    x = Integer.parseInt(data[4]);
+                    y = Integer.parseInt(data[5]);
+                } else {
+                    x = zoneID * 10;
+                    y = zoneID * 5;
                 }
 
-                Thread.sleep(500); //  time delay
+                Incident incident = new Incident(time, zoneID, eventType, severity);
+
+                System.out.println("Reading incident from CSV:");
+                incident.print();
+
+                sendIncidentToScheduler(zoneID, x, y);
+
+                Thread.sleep(2000);
             }
+
+            System.out.println("Finished reading all incidents from CSV file.");
+
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
         }
     }
+
+    private void sendIncidentToScheduler(int zoneID, int x, int y) {
+        try {
+            DatagramSocket socket = new DatagramSocket();
+
+            String message = String.format("Incident,%d,%d,%d", zoneID, x, y);
+            byte[] buffer = message.getBytes();
+
+            DatagramPacket packet = new DatagramPacket(
+                    buffer, buffer.length, schedulerAddress, SCHEDULER_PORT);
+
+            socket.send(packet);
+            System.out.println("Sent incident in Zone " + zoneID + " to scheduler at coordinates (" + x + ", " + y + ")");
+            socket.close();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    public static void main(String[] args) {
+        try {
+
+            InetAddress schedulerAddress = InetAddress.getLocalHost();
+
+
+            String csvFilePath = "src/resources/Sample_event_file.csv";
+
+            FireIncidentSubsystem fireSystem = new FireIncidentSubsystem(csvFilePath, schedulerAddress);
+            new Thread(fireSystem).start();
+
+            System.out.println("Started Fire Incident Subsystem with CSV file: " + csvFilePath);
+
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+        }
+    }
 }
-
-
