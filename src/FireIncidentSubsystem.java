@@ -1,7 +1,6 @@
 import java.io.*;
 import java.net.*;
 
-
 public class FireIncidentSubsystem implements Runnable {
     private static final int SCHEDULER_PORT = 4000; // Port where scheduler listens for incidents
     private final String csvFile;
@@ -24,12 +23,13 @@ public class FireIncidentSubsystem implements Runnable {
         }
     }
 
-
     private void readIncidentsFromCSV() {
         try (BufferedReader br = new BufferedReader(new FileReader(csvFile))) {
             String line;
+            // Skip header line
             br.readLine();
 
+            // Read incidents line by line
             while ((line = br.readLine()) != null && shouldRun) {
                 String[] data = line.split(",");
                 if (data.length < 4) continue;
@@ -44,6 +44,7 @@ public class FireIncidentSubsystem implements Runnable {
                     x = Integer.parseInt(data[4]);
                     y = Integer.parseInt(data[5]);
                 } else {
+
                     x = zoneID * 10;
                     y = zoneID * 5;
                 }
@@ -83,11 +84,10 @@ public class FireIncidentSubsystem implements Runnable {
             e.printStackTrace();
         }
     }
+
     public static void main(String[] args) {
         try {
-
             InetAddress schedulerAddress = InetAddress.getLocalHost();
-
 
             String csvFilePath = "src/resources/Sample_event_file.csv";
 

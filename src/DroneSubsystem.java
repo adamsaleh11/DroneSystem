@@ -71,9 +71,7 @@ public class DroneSubsystem implements Runnable {
         }
     }
 
-    /**
-     * Continuously listens for assignment messages from the scheduler
-     */
+
     private void listenForAssignments() {
         try {
             while (shouldRun) {
@@ -116,19 +114,15 @@ public class DroneSubsystem implements Runnable {
                 }
 
                 // Send status update every few seconds
-                Thread.sleep(10000);
+                Thread.sleep(5000);
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
     }
 
-    /**
-     * Registers this drone as available with the scheduler
-     */
     private void registerWithScheduler() {
         try {
-            // Format: "Drone,ID,X,Y"
             String message = String.format("Drone,%d,%d,%d", droneID, xPosition, yPosition);
             byte[] buffer = message.getBytes();
 
@@ -143,10 +137,6 @@ public class DroneSubsystem implements Runnable {
         }
     }
 
-    /**
-     * Handles an assignment from the scheduler
-     * @param assignmentMessage The assignment message from the scheduler
-     */
     private void handleAssignment(String assignmentMessage) {
         String[] parts = assignmentMessage.split(",");
         if (parts.length >= 4 && parts[0].equals("Assign")) {
@@ -157,41 +147,33 @@ public class DroneSubsystem implements Runnable {
             System.out.println("Drone " + droneID + " assigned to Zone " + zoneId +
                     " at location (" + zoneX + ", " + zoneY + ")");
 
-            // Simulate the drone traveling to the location
             try {
-                // Calculate simulated travel time based on distance
                 double distance = Math.sqrt(Math.pow(xPosition - zoneX, 2) + Math.pow(yPosition - zoneY, 2));
                 long travelTime = Math.max(1000, (long)(distance * 100)); // Scale factor for simulation
 
                 System.out.println("Drone " + droneID + " traveling to Zone " + zoneId + "...");
                 Thread.sleep(travelTime);
 
-                // Update position to incident location
                 this.xPosition = zoneX;
                 this.yPosition = zoneY;
 
-                // Simulate the operation at the site
                 System.out.println("Drone " + droneID + " arrived at Zone " + zoneId + ". Addressing incident...");
                 Thread.sleep(2000);
 
-                // Simulate the return journey
                 System.out.println("Drone " + droneID + " completed mission. Returning to base...");
 
-                // Return to a base position
-                int baseX = droneID * 10; // Simple logic for base positions
+                int baseX = droneID * 10;
                 int baseY = droneID * 10;
 
                 double returnDistance = Math.sqrt(Math.pow(xPosition - baseX, 2) + Math.pow(yPosition - baseY, 2));
                 long returnTime = Math.max(1000, (long)(returnDistance * 100));
                 Thread.sleep(returnTime);
 
-                // Update position to base location
                 this.xPosition = baseX;
                 this.yPosition = baseY;
 
                 System.out.println("Drone " + droneID + " has returned to base after addressing Zone " + zoneId);
 
-                // Send an immediate availability update after completing mission
                 registerWithScheduler();
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
@@ -199,15 +181,11 @@ public class DroneSubsystem implements Runnable {
         }
     }
 
-    /**
-     * Main method for testing the drone subsystem
-     */
+
     public static void main(String[] args) {
         try {
-            // Get local scheduler address - replace with actual scheduler address in production
             InetAddress schedulerAddress = InetAddress.getLocalHost();
 
-            // Create a few test drones with random positions
             Random random = new Random();
             for (int i = 1; i <= 3; i++) {
                 int x = random.nextInt(100);
@@ -218,7 +196,6 @@ public class DroneSubsystem implements Runnable {
 
                 System.out.println("Started Drone " + i + " at position (" + x + ", " + y + ")");
 
-                // Stagger drone startup slightly
                 Thread.sleep(500);
             }
         } catch (Exception e) {
