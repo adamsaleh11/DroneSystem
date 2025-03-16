@@ -38,12 +38,14 @@ public class Scheduler {
                 System.out.println("Received Incident: " + message);
 
                 String[] parts = message.split(",");
-                if (parts.length == 4 && parts[0].equals("Incident")) {
-                    int zoneId = Integer.parseInt(parts[1]);
-                    int zoneX = Integer.parseInt(parts[2]);
-                    int zoneY = Integer.parseInt(parts[3]);
+                if (parts.length == 5 && parts[0].equals("Incident")) {
+                    String time = parts[1];
+                    int zoneId = Integer.parseInt(parts[2]);
+                    String eventType = parts[3];
+                    String severity = parts[4];
 
-                    assignDrone(zoneId, zoneX, zoneY, packet.getAddress());
+                    Incident incident = new Incident(time, zoneId, eventType, severity);
+                    assignDrone(incident);
                 }
             }
         } catch (Exception e) {
@@ -83,8 +85,6 @@ public class Scheduler {
                         DroneInfo newDrone = new DroneInfo(id, x, y, packet.getAddress());
                         idleDrones.add(newDrone);
                         System.out.println("Added new drone: ID=" + id + ", position=(" + x + "," + y + ")");
-
-                        // Try to assign pending incidents
                         assignPendingIncidents();
                     }
                 }
@@ -94,12 +94,12 @@ public class Scheduler {
         }
     }
 
-    private void assignDrone(int zoneId, int zoneX, int zoneY, InetAddress fireAddress) {
+    private void assignDrone(Incident incident) {
         DroneInfo bestDrone = null;
         double bestDistance = Double.MAX_VALUE;
 
         for (DroneInfo drone : idleDrones) {
-            double distance = Math.sqrt(Math.pow(drone.x - zoneX, 2) + Math.pow(drone.y - zoneY, 2));
+            double distance = Math.sqrt(Math.pow(drone.x - incident.getZone(), 2) + Math.pow(drone.y - incident.getWaterAmountNeeded(), 2));
             if (distance < bestDistance) {
                 bestDistance = distance;
                 bestDrone = drone;
@@ -108,10 +108,10 @@ public class Scheduler {
 
         if (bestDrone != null) {
             idleDrones.remove(bestDrone);
-            sendDroneAssignment(bestDrone, zoneId, zoneX, zoneY);
+            sendDroneAssignment(bestDrone, incident);
         } else {
-            System.out.println("No available drones for Zone " + zoneId + ", adding to pending incidents.");
-            pendingIncidents.add(new Incident(zoneId, zoneX, zoneY, fireAddress));
+            System.out.println("No available drones for Zone " + incident.getZone() + ", adding to pending incidents.");
+            pendingIncidents.add(incident);
         }
     }
 
@@ -119,14 +119,14 @@ public class Scheduler {
         Iterator<Incident> iterator = pendingIncidents.iterator();
         while (iterator.hasNext() && !idleDrones.isEmpty()) {
             Incident incident = iterator.next();
-            assignDrone(incident.zoneId, incident.x, incident.y, incident.fireAddress);
+            assignDrone(incident);
             iterator.remove();
         }
     }
 
-    private void sendDroneAssignment(DroneInfo drone, int zoneId, int x, int y) {
+    private void sendDroneAssignment(DroneInfo drone, Incident incident) {
         try (DatagramSocket socket = new DatagramSocket()) {
-            String message = "Assign," + zoneId + "," + x + "," + y;
+            String message = "Assign," + incident.getZone() + "," + incident.getWaterAmountNeeded();
             byte[] buffer = message.getBytes();
 
             DatagramPacket packet = new DatagramPacket(
@@ -136,7 +136,7 @@ public class Scheduler {
             );
 
             socket.send(packet);
-            System.out.println("Assigned Drone " + drone.id + " to Zone " + zoneId);
+            System.out.println("Assigned Drone " + drone.id + " to Zone " + incident.getZone());
         } catch (Exception e) {
             e.printStackTrace();
             idleDrones.add(drone);
@@ -154,16 +154,4 @@ public class Scheduler {
             this.address = address;
         }
     }
-
-    static class Incident {
-        int zoneId, x, y;
-        InetAddress fireAddress;
-
-        Incident(int zoneId, int x, int y, InetAddress fireAddress) {
-            this.zoneId = zoneId;
-            this.x = x;
-            this.y = y;
-            this.fireAddress = fireAddress;
-        }
-    }
-}
+} 
