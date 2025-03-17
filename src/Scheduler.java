@@ -9,12 +9,10 @@ public class Scheduler {
     private final List<DroneInfo> idleDrones = new ArrayList<>();
     private final Queue<Incident> pendingIncidents = new LinkedList<>();
     private boolean shouldRun = true;
-
     public static void main(String[] args) {
         Scheduler scheduler = new Scheduler();
         scheduler.start();
     }
-
     public void start() {
         Thread receiveIncidents = new Thread(this::listenForIncidents);
         Thread receiveDrones = new Thread(this::listenForDroneUpdates);
@@ -26,16 +24,13 @@ public class Scheduler {
 
         System.out.println("Scheduler started and listening for incidents and drone updates");
     }
-
     private void listenForIncidents() {
         try (DatagramSocket socket = new DatagramSocket(SCHEDULER_PORT)) {
             System.out.println("Incident listener started on port " + SCHEDULER_PORT);
-
             while (shouldRun) {
                 byte[] buffer = new byte[1024];
                 DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
                 socket.receive(packet);
-
                 String message = new String(packet.getData(), 0, packet.getLength());
                 System.out.println("Received Incident: " + message);
 

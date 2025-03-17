@@ -30,10 +30,7 @@ public class FireIncidentSubsystem implements Runnable {
     private void readIncidentsFromCSV() {
         try (BufferedReader br = new BufferedReader(new FileReader(csvFile))) {
             String line;
-            // Skip header line
             br.readLine();
-
-            // Read incidents line by line
             while ((line = br.readLine()) != null && shouldRun) {
                 String[] data = line.split(",");
                 if (data.length < 4) continue;
@@ -92,14 +89,9 @@ public class FireIncidentSubsystem implements Runnable {
     public static void main(String[] args) {
         try {
             InetAddress schedulerAddress = InetAddress.getLocalHost();
-
-            String csvFilePath = "src/resources/Sample_event_file.csv";
-
-            FireIncidentSubsystem fireSystem = new FireIncidentSubsystem(csvFilePath, schedulerAddress);
+            FireIncidentSubsystem fireSystem = new FireIncidentSubsystem("src/resources/Sample_event_file.csv", schedulerAddress);
             new Thread(fireSystem).start();
-
-            System.out.println("Started Fire Incident Subsystem with CSV file: " + csvFilePath);
-
+            System.out.println("Started Fire Incident Subsystem");
         } catch (UnknownHostException e) {
             e.printStackTrace();
         }
