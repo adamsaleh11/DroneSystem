@@ -1,61 +1,56 @@
-/**
- * This class is a simple object class that creates an incident. Used all throughout the project
- */
 public class Incident {
     private String time;
-    private int zoneID;
+    private int zone;
     private String eventType;
     private String severity;
     private int waterAmountNeeded;
 
-    /**
-     * Initializing the incident object from the csv data
-     * @param time
-     * @param zoneID
-     * @param eventType
-     * @param severity
-     */
-    Incident(String time, int zoneID, String eventType, String severity) {
+    public Incident(String time, int zone, String eventType, String severity) {
         this.time = time;
-        this.zoneID = zoneID;
+        this.zone = zone;
         this.eventType = eventType;
         this.severity = severity;
-        //Apply logic to determine amount of water needed. Could be in data or set based on severity level.
-        switch (this.severity){
-            case "Low":
-                this.waterAmountNeeded = 10;
-                break;
-            case "Moderate":
-                this.waterAmountNeeded = 20;
-                break;
-            case "High":
-                this.waterAmountNeeded = 30;
-                break;
+        this.waterAmountNeeded = calculateWaterNeeded(severity);
+    }
+
+    private int calculateWaterNeeded(String severity) {
+        switch (severity) {
+            case "Low": return 10;
+            case "Moderate": return 20;
+            case "High": return 30;
+            default: return 15;
         }
     }
+
+    public void print() {
+        System.out.println("Time: " + time);
+        System.out.println("Zone Id: " + zone);
+        System.out.println("Event type: " + eventType);
+        System.out.println("Severity: " + severity);
+        System.out.println("Water needed: " + waterAmountNeeded + "L");
+    }
+
     public String getTime() {
-        return this.time;
+        return time;
     }
 
     public int getZone() {
-        return this.zoneID;
+        return zone;
     }
 
     public String getEventType() {
-        return this.eventType;
+        return eventType;
     }
+
     public String getSeverity() {
-        return this.severity;
+        return severity;
     }
+
     public int getWaterAmountNeeded() {
-        return this.waterAmountNeeded;
+        return waterAmountNeeded;
     }
-    public void print() {
-        System.out.println("Time: "+this.getTime()+
-                "\nZone Id: " +this.getZone()+
-                "\nEvent type: "+this.getEventType() +
-                "\nSeverity: "+ this.getSeverity() +
-                "\nWater needed: "+this.getWaterAmountNeeded() + "L\n");
+
+    public void setWaterAmountNeeded(int waterAmount) {
+        this.waterAmountNeeded = waterAmount;
     }
 }
-
