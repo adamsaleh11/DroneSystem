@@ -1,5 +1,6 @@
 import java.net.*;
 import java.io.IOException;
+import java.util.Scanner;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -18,6 +19,8 @@ public class DroneSubsystem implements Runnable {
     private final AtomicBoolean isAvailable = new AtomicBoolean(true);
     private DatagramSocket receiveSocket;
     private DatagramSocket sendSocket;
+    private DroneState currentState = DroneState.IDLE;
+
     /**
      * Constructor for DroneSubsystem
      * @param droneID Unique identifier for this drone
@@ -25,19 +28,15 @@ public class DroneSubsystem implements Runnable {
      * @param yPosition Initial Y coordinate of the drone
      * @param schedulerAddress IP address of the scheduler
      */
-    public DroneSubsystem(int droneID, int xPosition, int yPosition, InetAddress schedulerAddress) {
+    public DroneSubsystem(int droneID, int xPosition, int yPosition, InetAddress schedulerAddress) throws SocketException {
         this.droneID = droneID;
         this.xPosition = xPosition;
         this.yPosition = yPosition;
         this.schedulerAddress = schedulerAddress;
-
-        try {
-            this.receiveSocket = new DatagramSocket(DRONE_PORT + droneID);
-            this.sendSocket = new DatagramSocket();
-        } catch (SocketException e) {
-            e.printStackTrace();
-        }
+        this.receiveSocket = new DatagramSocket(DRONE_PORT + droneID);
+        this.sendSocket = new DatagramSocket();
     }
+
     /**
      * Stops the drone's operation
      */
@@ -50,6 +49,7 @@ public class DroneSubsystem implements Runnable {
             sendSocket.close();
         }
     }
+
     @Override
     public void run() {
         Thread listenerThread = new Thread(this::listenForAssignments);
@@ -63,6 +63,7 @@ public class DroneSubsystem implements Runnable {
             Thread.currentThread().interrupt();
         }
     }
+
     private void listenForAssignments() {
         try {
             while (shouldRun) {
@@ -98,7 +99,6 @@ public class DroneSubsystem implements Runnable {
                 if (isAvailable.get()) {
                     registerWithScheduler();
                 }
-
                 Thread.sleep(5000);
             }
         } catch (InterruptedException e) {
@@ -111,60 +111,90 @@ public class DroneSubsystem implements Runnable {
             String message = String.format("Drone,%d,%d,%d", droneID, xPosition, yPosition);
             byte[] buffer = message.getBytes();
             DatagramPacket packet = new DatagramPacket(
-                    buffer, buffer.length, schedulerAddress, DRONE_PORT);
+                    buffer, buffer.length, schedulerAddress, SCHEDULER_PORT);
             sendSocket.send(packet);
-            System.out.println("Drone " + droneID + " registered as available at position (" +
-                    xPosition + ", " + yPosition + ")");
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
+
     private void handleAssignment(String assignmentMessage) {
         String[] parts = assignmentMessage.split(",");
         if (parts.length >= 4 && parts[0].equals("Assign")) {
             int zoneId = Integer.parseInt(parts[1]);
             int zoneX = Integer.parseInt(parts[2]);
             int zoneY = Integer.parseInt(parts[3]);
-            System.out.println("Drone " + droneID + " assigned to Zone " + zoneId +
-                    " at location (" + zoneX + ", " + zoneY + ")");
+
+            System.out.printf("Drone %d assigned to Zone %d at (%d, %d)%n",
+                    droneID, zoneId, zoneX, zoneY);
+
+            setState(DroneState.EN_ROUTE);
+            System.out.println("Drone " + droneID + " is EN_ROUTE to the incident location.");
+
             try {
-                double distance = Math.sqrt(Math.pow(xPosition - zoneX, 2) + Math.pow(yPosition - zoneY, 2));
-                long travelTime = Math.max(1000, (long)(distance * 100)); // Scale factor for simulation
-                System.out.println("Drone " + droneID + " traveling to Zone " + zoneId + "...");
-                Thread.sleep(travelTime);
-                this.xPosition = zoneX;
-                this.yPosition = zoneY;
-                System.out.println("Drone " + droneID + " arrived at Zone " + zoneId + ".\nDrone coordinates: " +
-                        "X:["+xPosition+"]Y:["+yPosition+"]. " + "\nAddressing incident...");
+                Thread.sleep(3500);
+
+                setState(DroneState.DROPPING_AGENT);
+                System.out.println("Drone " + droneID + " is dropping fire suppression agent.");
+
                 Thread.sleep(2000);
-                System.out.println("Drone " + droneID + " completed mission. Returning to base...");
-                int baseX = droneID * 0;
-                int baseY = droneID * 0;
-                double returnDistance = Math.sqrt(Math.pow(xPosition - baseX, 2) + Math.pow(yPosition - baseY, 2));
-                long returnTime = Math.max(1000, (long)(returnDistance * 100));
-                Thread.sleep(returnTime);
-                this.xPosition = baseX;
-                this.yPosition = baseY;
-                System.out.println("Drone " + droneID + " has returned to base after addressing Zone " + zoneId);
-                registerWithScheduler();
+
+                setState(DroneState.RETURNING);
+                System.out.println("Drone " + droneID + " is returning to base.");
+
+                Thread.sleep(3500);
+
+                setState(DroneState.IDLE);
+                System.out.println("Drone " + droneID + " has successfully completed the mission.\n");
+
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
+                System.out.println("UNABLE TO FULFILL REQUEST. RETURNING TO BASE.\n");
             }
         }
     }
+
+    /**
+     * Sets the current state of the drone.
+     *
+     * @param newState The new state to transition to.
+     */
+    private void setState(DroneState newState) {
+        this.currentState = newState;
+        System.out.println("Drone " + droneID + " state changed to: " + newState);
+    }
+
     public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+        System.out.print("Enter the number of drones to deploy: ");
+        int numDrones = 1;
+
+        try {
+            numDrones = scanner.nextInt();
+            if (numDrones < 1) {
+                System.out.println("Invalid input. Defaulting to 1 drone.");
+                numDrones = 1;
+            }
+        } catch (Exception e) {
+            System.out.println("Invalid input. Defaulting to 1 drone.");
+        } finally {
+            scanner.close();
+        }
+
         try {
             InetAddress schedulerAddress = InetAddress.getLocalHost();
             Random random = new Random();
-            for (int i = 1; i <= 1; i++) {
+
+            for (int i = 1; i <= numDrones; i++) {
                 int x = random.nextInt(100);
                 int y = random.nextInt(100);
                 DroneSubsystem drone = new DroneSubsystem(i, x, y, schedulerAddress);
                 new Thread(drone).start();
-                System.out.println("Started Drone " + i + " at position (" + x + ", " + y + ")");
-                Thread.sleep(500);
+                System.out.printf("Drone %d started at position (%d, %d)%n", i, x, y);
+                Thread.sleep(200); // Stagger initialization
             }
         } catch (Exception e) {
+            System.err.println("Error initializing drones: " + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -183,5 +213,19 @@ public class DroneSubsystem implements Runnable {
 
     public int getYPosition() {
         return yPosition;
+    }
+
+    public DroneState getCurrentState() {
+        return currentState;
+    }
+
+    /**
+     * Enum representing the possible states of a drone.
+     */
+    enum DroneState {
+        IDLE,
+        EN_ROUTE,
+        DROPPING_AGENT,
+        RETURNING
     }
 }
