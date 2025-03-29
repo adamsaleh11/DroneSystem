@@ -122,7 +122,6 @@ public class DroneSubsystem implements Runnable {
             int waterNeeded = parts.length > 6 ? Integer.parseInt(parts[6]) : 0;
             String time = parts.length > 7 ? parts[7] : "Unknown";
 
-            // Print incident details
             System.out.println("Incident assigned to drone.");
             System.out.println("Sending Drone " + droneID + " to: ");
             System.out.println("####INCIDENT####");
@@ -193,7 +192,7 @@ public class DroneSubsystem implements Runnable {
                 schedulerAddress = InetAddress.getByName(ipAddress);
             }
 
-            System.out.print("Enter Drone ID (press Enter for default ID=1): ");
+            System.out.print("How many drones do you need? (press Enter for default 1): ");
             String droneIdStr = scanner.nextLine().trim();
             if (!droneIdStr.isEmpty()) {
                 droneId = Integer.parseInt(droneIdStr);
