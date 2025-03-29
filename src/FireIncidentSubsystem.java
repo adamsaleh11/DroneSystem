@@ -9,7 +9,6 @@ public class FireIncidentSubsystem implements Runnable {
     private final String csvFile;
     // Shares incidents with the system.
     //Stores the path to the CSV file containing incident reports.
-
     public FireIncidentSubsystem(LocalAreaNetwork lan, String csvFile) {
         this.lan = lan;
         this.csvFile = csvFile;
@@ -47,8 +46,6 @@ public class FireIncidentSubsystem implements Runnable {
                     lan.addIncident(incident);
                     lan.notifyAll();
                 }
-          
-           ]
 
                 Thread.sleep(500); //  time delay
             }
