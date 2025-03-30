@@ -306,7 +306,7 @@ public class Scheduler {
 
                 if (faultyDrone != null) {
                     // Handle the fault based on the fault type
-                    switch (faultType) {
+                    switch ("stuck") {
                         case "stuck":
                             System.out.println("Drone " + droneId + " is stuck in flight, reassigning incident.");
                             reassignIncident(faultyDrone);
@@ -350,14 +350,17 @@ public class Scheduler {
             pendingIncidents.add(status.currentIncident);
             status.currentIncident = null;
         }
+        sendCountdownResetCommand(drone);
     }
 
     private void forceNozzle(DroneInfo drone) {
         System.out.println("Forcing nozzle to work for Drone " + drone.id);
+        sendCountdownResetCommand(drone);
     }
 
     private void establishConnection(DroneInfo drone) {
         System.out.println("Re-establishing connection for Drone " + drone.id);
+        sendCountdownResetCommand(drone);
     }
 
     private void resetDroneToWorking(DroneInfo drone) {
@@ -415,12 +418,10 @@ public class Scheduler {
                             ", Available drones: " + idleDrones.size());
 
                     Incident incident = pendingIncidents.poll();
-                    System.out.println("Processing incident in Zone " + incident.getZone());
                     assignDrone(incident);
                 } else {
                     if (!pendingIncidents.isEmpty()) {
-                        System.out.println("Waiting for available drones. Pending incidents: " +
-                                pendingIncidents.size());
+                        System.out.println("Waiting for available drones. Pending incidents: " + pendingIncidents.size());
                     }
                 }
 
