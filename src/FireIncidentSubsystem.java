@@ -3,7 +3,7 @@ import java.net.*;
 import java.util.Scanner;
 
 public class FireIncidentSubsystem implements Runnable {
-    private static final int SCHEDULER_PORT = 4000; // Port where scheduler listens for incidents
+    private static final int SCHEDULER_PORT = 4000;
     private final String csvFile;
     private final InetAddress schedulerAddress;
     private volatile boolean shouldRun = true;
@@ -31,7 +31,6 @@ public class FireIncidentSubsystem implements Runnable {
     private void readIncidentsFromCSV() {
         try (BufferedReader br = new BufferedReader(new FileReader(csvFile))) {
             String line;
-            // Skip header
             br.readLine();
             while ((line = br.readLine()) != null && shouldRun) {
                 String[] data = line.split(",");
@@ -42,17 +41,13 @@ public class FireIncidentSubsystem implements Runnable {
                 String eventType = data[2];
                 String severity = data[3];
 
-                // Create an incident object
                 Incident incident = new Incident(time, zoneID, eventType, severity);
 
                 System.out.println("Reading report logs from csv");
                 System.out.println("##### Incident Added to scheduler ######");
                 incident.print();
 
-                // Send incident to scheduler with additional information
                 sendIncidentToScheduler(incident);
-
-                // Wait a moment before processing next incident
                 Thread.sleep(7000);
             }
 
@@ -67,8 +62,8 @@ public class FireIncidentSubsystem implements Runnable {
 
             String message = String.format("Incident,%d,%d,%d,%s,%s,%d,%s",
                     incident.getZone(),
-                    incident.getZone() * 10, // X coordinate based on zone
-                    incident.getZone() * 5,  // Y coordinate based on zone
+                    incident.getZone() * 10,
+                    incident.getZone() * 5,
                     incident.getEventType(),
                     incident.getSeverity(),
                     incident.getWaterAmountNeeded(),

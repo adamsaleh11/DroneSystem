@@ -9,8 +9,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * to register itself as available and receive incident assignments.
  */
 public class DroneSubsystem implements Runnable {
-    private static final int DRONE_PORT = 6000; // Port to receive assignments from scheduler
-    private static final int SCHEDULER_PORT = 4000; // Port to send availability to scheduler
+    private static int DRONE_PORT = 6000;
+    private static final int SCHEDULER_PORT = 4000;
     private final int droneID;
     private int xPosition;
     private int yPosition;
@@ -18,7 +18,7 @@ public class DroneSubsystem implements Runnable {
     private final InetAddress schedulerAddress;
     private final AtomicBoolean isAvailable = new AtomicBoolean(true);
     private DatagramSocket receiveSocket;
-    private DatagramSocket sendSocket;
+    public DatagramSocket sendSocket;
     private DroneState currentState = DroneState.IDLE;
     private int countdownTime;
     private volatile boolean isCountdownActive = true;
@@ -32,7 +32,19 @@ public class DroneSubsystem implements Runnable {
         this.receiveSocket = new DatagramSocket(DRONE_PORT + droneID);
         this.sendSocket = new DatagramSocket();
         Random rand = new Random();
+        this.countdownTime = rand.nextInt(10) + 15;
+    }
+
+    public DroneSubsystem(int droneID, int xPosition, int yPosition, InetAddress schedulerAddress, int port) throws SocketException {
+        this.droneID = droneID;
+        this.xPosition = xPosition;
+        this.yPosition = yPosition;
+        this.schedulerAddress = schedulerAddress;
+        this.receiveSocket = new DatagramSocket(DRONE_PORT + droneID);
+        this.sendSocket = new DatagramSocket();
+        Random rand = new Random();
         this.countdownTime = rand.nextInt(10) + 5;
+        this.DRONE_PORT = port;
     }
 
     public void stop() {
@@ -71,13 +83,16 @@ public class DroneSubsystem implements Runnable {
                 try {
                     receiveSocket.receive(packet);
                     String message = new String(packet.getData(), 0, packet.getLength());
-                    String[] parts = message.split(",");
-                    System.out.println("Drone " + droneID + " received message: RESET");
+                    Thread.sleep(1000);
                     if (message.startsWith("ResetCountdown")) {
+                        System.out.println("Drone " + droneID + " received RESET. Immediately reactivating.");
+                        isCountdownActive = true;
                         enableCountdown();
+                        setState(DroneState.IDLE);
                     }
                     else if (message.startsWith("Assign") && isAvailable.get()) {
                         isAvailable.set(false);
+                        String[] parts = message.split(",");
                         TempIncident incident = new TempIncident(
                                 parts[0],
                                 Integer.parseInt(parts[1]),
@@ -104,6 +119,28 @@ public class DroneSubsystem implements Runnable {
         }
     }
 
+    private void recoverFromFault() {
+        try {
+            switch (currentState) {
+                case DROPPING_AGENT:
+                    System.out.println("FORCING NOZZLE TO WORK...");
+                    break;
+                case RETURNING:
+                case EN_ROUTE:
+                    System.out.println("REASSIGNING INCIDENT (STUCK RECOVERY)...");
+                    break;
+                case IDLE:
+                    System.out.println("RESETTING CONNECTION (PACKET LOSS RECOVERY)...");
+                    break;
+            }
+            enableCountdown();
+            setState(DroneState.IDLE);
+            System.out.println("Drone " + droneID + " fully recovered and ready for new assignments.");
+        } catch (Exception e) {
+            System.err.println("Error during fault recovery: " + e.getMessage());
+        }
+    }
+
     private void startCountdown() {
         try {
             while (shouldRun && countdownTime > 0) {
@@ -120,7 +157,7 @@ public class DroneSubsystem implements Runnable {
         }
     }
 
-    private void injectFault() {
+    public void injectFault() {
         String faultMessage = "No fault detected.";
         boolean isFaultDetected = false;
         switch (currentState) {
@@ -146,17 +183,15 @@ public class DroneSubsystem implements Runnable {
         }
     }
 
-    public void enableCountdown() throws InterruptedException {
+    public void enableCountdown() {
         isCountdownActive = true;
-        countdownTime = new Random().nextInt(5) + 60; //
-        Thread.sleep(1000);
-        System.out.println("Drone " + droneID + " reactivated.");
+
     }
 
     private void sendFaultMessageToScheduler(String faultMessage) {
         try {
             String message = String.format("Drone %d Fault: %s", droneID, faultMessage);
-            System.out.println("######ERROR######\nSending fault message to scheduler: " + message);
+            System.out.println("###### ERROR ######\nSending fault message to scheduler: " + message);
             byte[] buffer = message.getBytes();
             DatagramPacket packet = new DatagramPacket(
                     buffer, buffer.length, schedulerAddress, DRONE_PORT);
@@ -198,38 +233,63 @@ public class DroneSubsystem implements Runnable {
             int zoneY = incident.getY();
             String eventType = incident.getType() != null ? incident.getType() : "UNKNOWN";
             String severity = incident.getSeverity() != null ? incident.getSeverity() : "Unknown";
-            int waterNeeded = incident.getPriority(); // Assuming priority represents water needed
+            int waterNeeded = incident.getPriority();
             String time = incident.getTime() != null ? incident.getTime() : "Unknown";
 
-            System.out.println("Incident assigned to drone.");
-            System.out.println("Sending Drone " + droneID + " to: ");
-            System.out.println("####INCIDENT####");
-            System.out.println("Time: " + time);
-            System.out.println("Zone ID: " + zoneId);
-            System.out.println("Event Type: " + eventType);
-            System.out.println("Severity: " + getSeverityLevel(severity));
-            System.out.println("Water Needed: " + waterNeeded + "L\n");
+            System.out.println("Incident assigned to drone." +
+                    "\nSending Drone " + droneID + " to: " +
+                    "\n#### INCIDENT ####" +
+                    "\nTime: " + time + "" +
+                    "\nZone ID: " + zoneId + "" +
+                    "\nEvent Type: " + eventType + "" +
+                    "\nSeverity: " + getSeverityLevel(severity) + "" +
+                    "\nWater Needed: " + waterNeeded + "L\n");
 
-            simulateTravel();
+
+            simulateTravel(zoneX, zoneY);
         }
     }
 
-    public void simulateTravel() {
+    public void simulateTravel(int zoneX, int zoneY) {
         try {
             Random random = new Random();
-            int travelTime = (random.nextInt(7) + 3) * 1000; // Ensure multiplication is correct
+
+
+            int distanceToZone = (int) Math.sqrt(Math.pow(zoneX - xPosition, 2) + Math.pow(zoneY - yPosition, 2));
+            int travelTime = (random.nextInt(7) + 3) * 1000;
+            int steps = 5;
 
             setState(DroneState.EN_ROUTE);
             System.out.println("Drone " + droneID + " is EN_ROUTE to the incident location.");
-            if (!waitOrPause(travelTime)) return;
+
+            for (int i = 1; i <= steps; i++) {
+                xPosition = xPosition + (zoneX - xPosition) / (steps - i + 1);
+                yPosition = yPosition + (zoneY - yPosition) / (steps - i + 1);
+
+                System.out.println("Drone " + droneID + " is moving to: (" + xPosition + ", " + yPosition + ")");
+                Thread.sleep(500);
+                if (!waitOrPause(travelTime / steps)) return;
+            }
+
+            System.out.println("Drone " + droneID + " has arrived at the incident location: (" + xPosition + ", " + yPosition + ")");
 
             setState(DroneState.DROPPING_AGENT);
             System.out.println("Drone " + droneID + " is dropping fire suppression agent.");
+            Thread.sleep(1000);
             if (!waitOrPause(travelTime)) return;
 
             setState(DroneState.RETURNING);
             System.out.println("Drone " + droneID + " is returning to base.");
-            if (!waitOrPause(travelTime)) return;
+            for (int i = 1; i <= steps; i++) {
+                xPosition = xPosition - xPosition / (steps - i + 1);
+                yPosition = yPosition - yPosition / (steps - i + 1);
+
+                System.out.println("Drone " + droneID + " is returning to base: (" + xPosition + ", " + yPosition + ")");
+                Thread.sleep(500);
+                if (!waitOrPause(travelTime / steps)) return;
+            }
+
+            System.out.println("Drone " + droneID + " has returned to base: (" + xPosition + ", " + yPosition + ")");
 
             setState(DroneState.IDLE);
             System.out.println("DRONE SUCCESSFULLY COMPLETED & RETURNED FROM INCIDENT\n");
@@ -241,26 +301,32 @@ public class DroneSubsystem implements Runnable {
     }
 
     private boolean waitOrPause(int duration) throws InterruptedException {
-        int interval = 500; // Check every 500ms
-        int waited = 0;
-        int count = 0;
-        while (waited < duration) {
-            while (!isCountdownActive) {
-                Thread.sleep(500);
-                count++;
-                if (count >= MAX_RETRY) {
-                    System.out.println("Setting drone " + this.droneID +" to OFFLINE and shutting down...");
-                    setDroneOffline();
-                    return false;
+        long startTime = System.currentTimeMillis();
+        long timeout = startTime + duration;
+
+        while (System.currentTimeMillis() < timeout) {
+            if (!isCountdownActive) {
+                Thread.sleep(100);
+            } else {
+                long remainingTime = timeout - System.currentTimeMillis();
+                if (remainingTime > 0) {
+                    Thread.sleep(remainingTime);
                 }
+                return true;
             }
-            Thread.sleep(Math.min(interval, duration - waited));
-            waited += interval;
         }
-        return true;
+        forceRecovery();
+        return false;
     }
 
-    private void setState(DroneState newState) {
+    private void forceRecovery() {
+        System.out.println("Drone " + droneID + " FORCE-RECOVERING from fault state.");
+        isCountdownActive = true;
+        setState(DroneState.IDLE);
+        enableCountdown();
+    }
+
+    public void setState(DroneState newState) {
         this.currentState = newState;
         System.out.println("Drone " + droneID + " state changed to: " + newState);
     }

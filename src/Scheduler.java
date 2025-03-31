@@ -13,7 +13,6 @@ public class Scheduler {
     private final Queue<Incident> pendingIncidents = new LinkedList<>();
     private final List<Zone> zones = new ArrayList<>();
 
-    // New map to track all drones and their statuses
     private final Map<Integer, DroneStatus> allDrones = new ConcurrentHashMap<>();
 
     private boolean shouldRun = true;
@@ -43,11 +42,10 @@ public class Scheduler {
             System.out.println("Starting scheduler services...");
             scheduler.start();
 
-            // Add a thread to periodically display drone statuses
             Thread statusThread = new Thread(() -> {
                 while (scheduler.shouldRun) {
                     try {
-                        Thread.sleep(10000); // Print statuses every 10 seconds
+                        Thread.sleep(10000);
                     } catch (InterruptedException e) {
                         Thread.currentThread().interrupt();
                     }
@@ -85,21 +83,17 @@ public class Scheduler {
         shouldRun = false;
 
         try {
-            // Use a temporary socket to unblock the listening sockets
             DatagramSocket tempSocket = new DatagramSocket();
             byte[] data = "STOP".getBytes();
 
-            // Send a packet to unblock the incident listener
             tempSocket.send(new DatagramPacket(data, data.length,
                     InetAddress.getLocalHost(), SCHEDULER_PORT));
 
-            // Send a packet to unblock the drone listener
             tempSocket.send(new DatagramPacket(data, data.length,
                     InetAddress.getLocalHost(), DRONE_PORT));
 
             tempSocket.close();
 
-            // Wait for all threads to terminate
             if (receiveIncidents != null) receiveIncidents.join();
             if (receiveDrones != null) receiveDrones.join();
             if (processIncidents != null) processIncidents.join();
@@ -110,7 +104,7 @@ public class Scheduler {
 
     private void listenForIncidents() {
         try (DatagramSocket socket = new DatagramSocket(SCHEDULER_PORT)) {
-            socket.setSoTimeout(1000); // Set timeout to check shouldRun flag periodically
+            socket.setSoTimeout(1000);
 
             System.out.println("Listening for incidents on port " + SCHEDULER_PORT);
 
@@ -142,7 +136,7 @@ public class Scheduler {
                         pendingIncidents.add(incident);
                     }
                 } catch (SocketTimeoutException e) {
-                    // Timeout occurred, loop will continue if shouldRun is true
+
                 } catch (Exception e) {
                     if (shouldRun) {
                         System.err.println("Error receiving incident: " + e.getMessage());
@@ -161,7 +155,7 @@ public class Scheduler {
 
     private void listenForDroneUpdates() {
         try (DatagramSocket socket = new DatagramSocket(DRONE_PORT)) {
-            socket.setSoTimeout(1000); // Set timeout to check shouldRun flag periodically
+            socket.setSoTimeout(1000);
 
             System.out.println("Listening for drone updates on port " + DRONE_PORT);
 
@@ -182,7 +176,6 @@ public class Scheduler {
                         continue;
                     }
 
-                    // Handle drone registration messages - This was missing!
                     String[] parts = message.split(",");
                     if (parts.length >= 4 && parts[0].equals("Drone")) {
                         int droneId = Integer.parseInt(parts[1]);
@@ -190,14 +183,11 @@ public class Scheduler {
                         int y = Integer.parseInt(parts[3]);
 
                         InetAddress droneAddress = packet.getAddress();
-
-                        // Update drone in the tracking system
                         updateDroneStatus(droneId, x, y, droneAddress, "IDLE", true);
 
                         boolean droneFound = false;
                         for (DroneInfo drone : idleDrones) {
                             if (drone.id == droneId) {
-                                // Update existing drone info
                                 drone.x = x;
                                 drone.y = y;
                                 drone.lastUpdateTime = System.currentTimeMillis();
@@ -214,7 +204,6 @@ public class Scheduler {
                     }
 
                 } catch (SocketTimeoutException e) {
-                    // Timeout occurred, loop will continue if shouldRun is true
                 } catch (Exception e) {
                     if (shouldRun) {
                         System.err.println("Error receiving drone update: " + e.getMessage());
@@ -231,7 +220,6 @@ public class Scheduler {
         System.out.println("Drone listener stopped");
     }
 
-    // New method to update drone status
     private void updateDroneStatus(int droneId, int x, int y, InetAddress address, String state, boolean isAvailable) {
         DroneStatus status = allDrones.get(droneId);
 
@@ -251,31 +239,30 @@ public class Scheduler {
     }
 
     private void processDroneFault(String message) {
-        System.out.println("Processing fault message: " + message);
+        // Format the fault header
+        System.out.println("\n####################################");
+        System.out.println("#####        DRONE FAULT       #####");
+        System.out.println("####################################");
 
-        // Split by "Fault:" to separate drone ID and the fault part
         String[] parts = message.split("Fault:");
         if (parts.length > 1) {
-            String faultDetails = parts[1].trim(); // The fault message after "Fault:"
-            System.out.println("Fault details: " + faultDetails);
-
-            // Split the fault message to isolate the error description
+            String faultDetails = parts[1].trim();
             String[] faultParts = faultDetails.split("ERROR:");
             String faultDescription = faultParts.length > 1 ? faultParts[1].trim() : faultParts[0].trim();
-            System.out.println("Fault description: " + faultDescription);
 
-            // Extract drone ID from the first part of the message
+            // Print formatted fault information
+            System.out.println("# Fault Description: " + faultDescription);
+
             String[] droneParts = parts[0].trim().split(" ");
             int droneId = -1;
             if (droneParts.length >= 2) {
                 try {
                     droneId = Integer.parseInt(droneParts[1]);
                 } catch (NumberFormatException e) {
-                    System.out.println("Error parsing drone ID: " + e.getMessage());
+                    System.out.println("# Error: Invalid Drone ID format");
                 }
             }
 
-            // Determine fault type from the description
             String faultType = "";
             if (faultDescription.toLowerCase().contains("connection lost via packet loss")) {
                 faultType = "packet";
@@ -285,17 +272,15 @@ public class Scheduler {
                 faultType = "nozzle";
             }
 
-            // Check if we found a valid drone ID
             if (droneId != -1 && !faultType.isEmpty()) {
-                System.out.println("Found Drone ID: " + droneId + " with fault type: " + faultType);
+                System.out.println("# Drone ID: " + droneId);
+                System.out.println("# Fault Type: " + faultType.toUpperCase());
 
-                // Update drone status with fault information
                 DroneStatus status = allDrones.get(droneId);
                 if (status != null) {
                     status.faultMessage = faultDescription;
                 }
 
-                // Look for the drone in the idleDrones list
                 DroneInfo faultyDrone = null;
                 for (DroneInfo drone : idleDrones) {
                     if (drone.id == droneId) {
@@ -305,52 +290,43 @@ public class Scheduler {
                 }
 
                 if (faultyDrone != null) {
-                    // Handle the fault based on the fault type
-                    switch ("stuck") {
+                    switch (faultType) {
                         case "stuck":
-                            System.out.println("Drone " + droneId + " is stuck in flight, reassigning incident.");
+                            System.out.println("# Action: Reassigning incident and resetting drone");
                             reassignIncident(faultyDrone);
                             break;
                         case "nozzle":
-                            System.out.println("Drone " + droneId + " has a nozzle error, forcing nozzle to work.");
+                            System.out.println("# Action: Forcing nozzle and resetting drone");
                             forceNozzle(faultyDrone);
                             break;
                         case "packet":
-                            System.out.println("Drone " + droneId + " has packet loss, re-establishing connection.");
+                            System.out.println("# Action: Re-establishing connection");
                             establishConnection(faultyDrone);
                             break;
-                        default:
-                            System.out.println("Unknown fault for Drone " + droneId + ": " + faultType);
-                            break;
                     }
-
-                    // After handling the fault, reset the drone to working state
                     resetDroneToWorking(faultyDrone);
-                } else {
-                    System.out.println("Fault detected for drone " + droneId);
                 }
             } else {
                 if (droneId == -1) {
-                    System.out.println("Failed to extract valid drone ID from the fault message.");
+                    System.out.println("# Error: Could not identify drone");
                 }
                 if (faultType.isEmpty()) {
-                    System.out.println("Could not determine fault type from description: " + faultDescription);
+                    System.out.println("# Error: Unknown fault type");
                 }
             }
         }
+        System.out.println("####################################\n");
     }
 
     private void reassignIncident(DroneInfo drone) {
         System.out.println("Reassigning incident for Drone " + drone.id);
-
-        // Find the drone status
+        sendCountdownResetCommand(drone);
         DroneStatus status = allDrones.get(drone.id);
         if (status != null && status.currentIncident != null) {
-            // Put the incident back in the queue
             pendingIncidents.add(status.currentIncident);
             status.currentIncident = null;
         }
-        sendCountdownResetCommand(drone);
+
     }
 
     private void forceNozzle(DroneInfo drone) {
@@ -371,10 +347,8 @@ public class Scheduler {
             status.state = "IDLE";
             status.isAvailable = true;
 
-            // Send reactivation command to drone
             sendCountdownResetCommand(drone);
 
-            // Add drone back to idle drones if not already there
             boolean droneFound = false;
             for (DroneInfo d : idleDrones) {
                 if (d.id == drone.id) {
@@ -389,7 +363,6 @@ public class Scheduler {
         }
     }
 
-    // Add this new method to Scheduler.java
     private void sendCountdownResetCommand(DroneInfo drone) {
         try (DatagramSocket socket = new DatagramSocket()) {
             String message = "ResetCountdown";
@@ -421,18 +394,17 @@ public class Scheduler {
                     assignDrone(incident);
                 } else {
                     if (!pendingIncidents.isEmpty()) {
-                        System.out.println("Waiting for available drones. Pending incidents: " + pendingIncidents.size());
+                        System.out.println("Waiting for available drones. Pending incidents: " +
+                                pendingIncidents.size());
                     }
                 }
 
-                // Clean up stale drone registrations (older than 30 seconds)
                 long currentTime = System.currentTimeMillis();
                 idleDrones.removeIf(drone -> {
                     boolean isStale = (currentTime - drone.lastUpdateTime) > 30000;
                     if (isStale) {
                         System.out.println("Removing stale drone: Drone " + drone.id);
 
-                        // Update status to offline
                         DroneStatus status = allDrones.get(drone.id);
                         if (status != null) {
                             status.state = "OFFLINE";
@@ -453,7 +425,7 @@ public class Scheduler {
         System.out.println("Incident processor stopped");
     }
 
-    private void assignDrone(Incident incident) {
+    public void assignDrone(Incident incident) {
         Zone zone = getZoneById(incident.getZone());
         if (zone == null) {
             System.out.println("Zone ID " + incident.getZone() + " not found. Cannot assign drone.");
@@ -477,8 +449,6 @@ public class Scheduler {
         if (bestDrone != null) {
             idleDrones.remove(bestDrone);
             System.out.println("Assigning Drone " + bestDrone.id + " to incident in Zone " + incident.getZone());
-
-            // Update drone status
             DroneStatus status = allDrones.get(bestDrone.id);
             if (status != null) {
                 status.isAvailable = false;
@@ -515,8 +485,6 @@ public class Scheduler {
         } catch (Exception e) {
             System.err.println("Error sending assignment to drone: " + e.getMessage());
             e.printStackTrace();
-
-            // Add drone back to idle list and update status
             DroneStatus status = allDrones.get(drone.id);
             if (status != null) {
                 status.isAvailable = true;
@@ -539,7 +507,7 @@ public class Scheduler {
 
     public void loadZones(String filename) {
         try (BufferedReader br = new BufferedReader(new FileReader(filename))) {
-            String line = br.readLine(); // Skip header
+            String line = br.readLine();
             while ((line = br.readLine()) != null) {
                 String[] parts = line.split(",");
                 int zoneID = Integer.parseInt(parts[0].trim());
@@ -589,7 +557,6 @@ public class Scheduler {
         }
     }
 
-    // New class to track drone status
     static class DroneStatus {
         DroneInfo droneInfo;
         String state = "UNKNOWN";
@@ -602,7 +569,6 @@ public class Scheduler {
         }
     }
 
-    // You'll also need to add this Incident class if it's not already defined elsewhere
     static class Incident {
         private final String time;
         private final int zone;
