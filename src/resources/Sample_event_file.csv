@@ -6,3 +6,4 @@ Time,Zone ID,Event type,Severity
 14:03:15,5,FIRE_DETECTED,High
 14:10:00,6,DRONE_REQUEST,Moderate
 14:03:15,7,FIRE_DETECTED,High
+
