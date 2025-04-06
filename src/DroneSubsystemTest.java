@@ -21,7 +21,7 @@ class DroneSubsystemTest {
         schedulerAddress = InetAddress.getLocalHost();
         sendSocket = new DatagramSocket();
         receiveSocket = new DatagramSocket(RECEIVE_PORT);
-        droneSubsystem = new DroneSubsystem(1, 0, 0, schedulerAddress, RECEIVE_PORT);
+        droneSubsystem = new DroneSubsystem(1, 0, 0, schedulerAddress);
         droneSubsystem.sendSocket = sendSocket;
     }
 

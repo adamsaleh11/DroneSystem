@@ -48,7 +48,7 @@ public class FireIncidentSubsystem implements Runnable {
                 incident.print();
 
                 sendIncidentToScheduler(incident);
-                Thread.sleep(7000);
+                Thread.sleep(3000);
             }
 
         } catch (IOException | InterruptedException e) {
