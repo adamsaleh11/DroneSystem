@@ -227,9 +227,16 @@ public class DroneControlPanel extends JFrame {
             try {
                 doc.insertString(doc.getLength(), "State: ", defaultStyle);
                 doc.insertString(doc.getLength(), drone.getCurrentState().toString(), stateStyle);
+                doc.insertString(doc.getLength(), " Water Capacity: ", defaultStyle);
+                doc.insertString(doc.getLength(), drone.getWaterCapacity() + "L\n", stateStyle);
+                doc.insertString(doc.getLength(), "Total distance Traveled: ", defaultStyle);
+                String distFormatted = String.format("%.2f", drone.getDistanceTraveled());
+                doc.insertString(doc.getLength(), distFormatted + " units\n", stateStyle);
+
             } catch (Exception e) {
                 e.printStackTrace();
             }
+
         }
     }
 

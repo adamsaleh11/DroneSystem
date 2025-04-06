@@ -25,6 +25,8 @@ public class Scheduler {
     private Thread receiveDrones;
     private Thread processIncidents;
     Set<String> pendingIncidentIDs = new HashSet<>();
+    private LocalDateTime firstIncidentReceived = null;
+    private LocalDateTime lastIncidentCompleted = null;
 
     public static void main(String[] args) {
         System.out.println("=== SCHEDULER SUBSYSTEM STARTING ===");
@@ -43,7 +45,8 @@ public class Scheduler {
             SwingUtilities.invokeLater(() -> new SchedulerMonitorGUI(
                     scheduler.getAllDrones(),
                     scheduler.getPendingIncidents(),
-                    scheduler.getCompletedIncidents()
+                    scheduler.getCompletedIncidents(),
+                    scheduler
             ));
 
             System.out.println("Scheduler is now running. Press Enter to stop.");
@@ -98,6 +101,9 @@ public class Scheduler {
 
                     String[] parts = message.split(",");
                     if (parts.length >= 8 && parts[0].equals("Incident")) {
+                        if (firstIncidentReceived == null) {
+                            firstIncidentReceived = LocalDateTime.now();
+                        }
                         Incident incident = new Incident(parts[7], Integer.parseInt(parts[1]), parts[4], parts[5]);
                         incident.setWaterAmountNeeded(Integer.parseInt(parts[6]));
                         pendingIncidents.add(incident);
@@ -158,6 +164,8 @@ public class Scheduler {
                     }
 
                     if (message.contains("Complete")) {
+                        lastIncidentCompleted = LocalDateTime.now();
+                        checkIfAllIncidentsCompleted();
                         String[] parts = message.split(",");
                         if (parts.length >= 6) {
                             int droneId = Integer.parseInt(parts[1]);
@@ -302,7 +310,6 @@ public class Scheduler {
 
             best.isAvailable = false;
             best.currentIncident = incident;
-            best.state = "EN_ROUTE";
             sendDroneAssignment(best.droneInfo, incident, x, y);
             System.out.println("\n================== ASSIGNMENT ==================");
             System.out.printf("Drone ID:         %d\n", best.droneInfo.id);
@@ -494,6 +501,19 @@ public class Scheduler {
             sendCountdownResetCommand(status.droneInfo);
         }
     }
+    private void checkIfAllIncidentsCompleted() {
+        if (firstIncidentReceived != null &&
+                !pendingIncidentIDs.isEmpty() &&
+                completedIncidentIDs.size() == pendingIncidentIDs.size()) {
+
+            Duration total = Duration.between(firstIncidentReceived, lastIncidentCompleted);
+            long minutes = total.toMinutes();
+            long seconds = total.getSeconds() % 60;
+            System.out.println("\n================== TOTAL FIRE RESPONSE TIME ==================");
+            System.out.printf("All incidents handled in %d min, %02d sec\n", minutes, seconds);
+            System.out.println("=============================================================\n");
+        }
+    }
 
     private void sendCountdownResetCommand(DroneInfo drone) {
         try (DatagramSocket socket = new DatagramSocket()) {
@@ -505,6 +525,20 @@ public class Scheduler {
         } catch (Exception e) {
             System.err.println("Error sending countdown reset to drone: " + e.getMessage());
         }
+    }
+
+    public double getDistanceToIncident(int droneId) {
+        DroneStatus status = allDrones.get(droneId);
+        if (status == null || status.currentIncident == null) return 0.0;
+
+        int x1 = status.droneInfo.x;
+        int y1 = status.droneInfo.y;
+        Zone zone = getZoneById(status.currentIncident.getZone());
+        if (zone == null) return 0.0;
+
+        int x2 = zone.getCenterX();
+        int y2 = zone.getCenterY();
+        return Math.hypot(x2 - x1, y2 - y1);
     }
 
     static class DroneInfo {

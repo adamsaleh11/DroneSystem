@@ -25,6 +25,8 @@ public class DroneSubsystem implements Runnable {
     private static final int MAX_RETRY = 5;
     private volatile boolean faultInjected = false;
     private Incident currentIncident = null;
+    private int waterCapacity;
+    private double distanceTraveled;
 
     public DroneSubsystem(int droneID, int xPosition, int yPosition, InetAddress schedulerAddress) throws SocketException {
         this.droneID = droneID;
@@ -35,6 +37,8 @@ public class DroneSubsystem implements Runnable {
         this.sendSocket = new DatagramSocket();
         Random rand = new Random();
         this.countdownTime = rand.nextInt(10) + 15;
+        this.waterCapacity = 40;
+        this.distanceTraveled = 0;
     }
 
     public void stop() {
@@ -102,13 +106,18 @@ public class DroneSubsystem implements Runnable {
 
 
     private void handleAssignment(Incident incident, int targetX, int targetY) {
-        if (incident != null) {
+        if (incident != null && waterCapacity >= incident.getWaterAmountNeeded()) {
             this.currentIncident = incident;
             simulateTravel(incident, targetX, targetY);
+        } else {
+            System.out.printf("Drone %d has insufficient water. Needs %dL, has %dL.\n",
+                    droneID, incident.getWaterAmountNeeded(), waterCapacity);
+            sendReassignRequest(incident);
         }
     }
 
     public void simulateTravel(Incident incident, int targetX, int targetY) {
+        distanceTraveled += Math.hypot(targetX - xPosition, targetY-yPosition);
         try {
             if (faultInjected) {
                 System.out.println("Fault injected before travel began.");
@@ -119,7 +128,6 @@ public class DroneSubsystem implements Runnable {
             Random random = new Random();
             int travelTime = (random.nextInt(7) + 3) * 1000;
             int steps = 5;
-
             setState(DroneState.EN_ROUTE);
             sendStatusUpdate();
             for (int i = 1; i <= steps; i++) {
@@ -146,7 +154,7 @@ public class DroneSubsystem implements Runnable {
                 }
                 Thread.sleep(300);
             }
-
+            waterCapacity -=incident.getWaterAmountNeeded();
             sendCompletionMessage(incident);
             if (!waitOrPause(travelTime)) return;
 
@@ -165,6 +173,7 @@ public class DroneSubsystem implements Runnable {
                 if (!waitOrPause(travelTime / steps)) return;
             }
 
+            waterCapacity = 40;
             setState(DroneState.IDLE);
             sendStatusUpdate();
         } catch (InterruptedException e) {
@@ -232,6 +241,7 @@ public class DroneSubsystem implements Runnable {
             // Ensure drone is exactly at the base.
             xPosition = 0;
             yPosition = 0;
+            waterCapacity = 40;
             // Now set state to IDLE so the drone becomes available for assignments.
             setState(DroneState.IDLE);
             sendStatusUpdate();
@@ -375,5 +385,11 @@ public class DroneSubsystem implements Runnable {
     }
     public DroneState getCurrentState() {
         return currentState;
+    }
+    public int getWaterCapacity() {
+        return waterCapacity;
+    }
+    public double getDistanceTraveled() {
+        return distanceTraveled;
     }
 }

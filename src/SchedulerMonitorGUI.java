@@ -26,13 +26,16 @@ public class SchedulerMonitorGUI extends JFrame {
     private final Map<Integer, Scheduler.DroneStatus> allDrones;
     private final Queue<Incident> pendingIncidents;
     private final List<Incident> completedIncidents;
+    private final Scheduler scheduler;
 
     public SchedulerMonitorGUI(Map<Integer, Scheduler.DroneStatus> drones,
                                Queue<Incident> pending,
-                               List<Incident> completed) {
+                               List<Incident> completed,
+                               Scheduler scheduler) {
         this.allDrones = drones;
         this.pendingIncidents = pending;
         this.completedIncidents = completed;
+        this.scheduler = scheduler;
 
         setTitle("Scheduler Monitor");
         setSize(900, 600);
@@ -171,7 +174,6 @@ public class SchedulerMonitorGUI extends JFrame {
 
             allDrones.forEach((id, status) -> {
                 String zone = status.currentIncident != null ? String.valueOf(status.currentIncident.getZone()) : "None";
-
                 try {
                     doc.insertString(doc.getLength(), "Drone ", defaultStyle);
                     doc.insertString(doc.getLength(), String.valueOf(id), highlightStyle);
@@ -188,6 +190,13 @@ public class SchedulerMonitorGUI extends JFrame {
                     doc.insertString(doc.getLength(), " Zone: ", defaultStyle);
                     Style zoneStyle = zone.equals("None") ? defaultStyle : alertStyle;
                     doc.insertString(doc.getLength(), zone, zoneStyle);
+                    doc.insertString(doc.getLength(), "\n", defaultStyle);
+                    if (status.currentIncident != null) {
+                        double distance = scheduler.getDistanceToIncident(id);
+                        doc.insertString(doc.getLength(), " Distance: ", defaultStyle);
+                        doc.insertString(doc.getLength(), String.format("%.2f units", distance), valueStyle);
+                    }
+                    doc.insertString(doc.getLength(), "\n", defaultStyle);
                     doc.insertString(doc.getLength(), "\n", defaultStyle);
                 } catch (Exception e) {
                     e.printStackTrace();
