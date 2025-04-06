@@ -52,7 +52,7 @@ public class SchedulerMonitorGUI extends JFrame {
 
         // Add panels with titles
         elapsedTimeLabel.setFont(new Font("Consolas", Font.BOLD, 16));
-        elapsedTimeLabel.setForeground(HIGHLIGHT_COLOR);
+        elapsedTimeLabel.setForeground(HEADER_COLOR);
         elapsedTimeLabel.setHorizontalAlignment(SwingConstants.LEFT);
         elapsedTimeLabel.setBorder(BorderFactory.createEmptyBorder(10, 15, 5, 0));
         elapsedTimeLabel.setBackground(BG_COLOR);
