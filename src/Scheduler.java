@@ -527,6 +527,16 @@ public class Scheduler {
         }
     }
 
+    public String getElapsedTimeFormatted() {
+        if (firstIncidentReceived == null) return "Waiting for first incident...";
+        LocalDateTime end = (lastIncidentCompleted != null) ? lastIncidentCompleted : LocalDateTime.now();
+
+        Duration duration = Duration.between(firstIncidentReceived, end);
+        long min = duration.toMinutes();
+        long sec = duration.getSeconds() % 60;
+        return String.format("Elapsed Time: %02d:%02d", min, sec);
+    }
+
     public double getDistanceToIncident(int droneId) {
         DroneStatus status = allDrones.get(droneId);
         if (status == null || status.currentIncident == null) return 0.0;

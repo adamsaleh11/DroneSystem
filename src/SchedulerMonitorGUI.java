@@ -27,6 +27,7 @@ public class SchedulerMonitorGUI extends JFrame {
     private final Queue<Incident> pendingIncidents;
     private final List<Incident> completedIncidents;
     private final Scheduler scheduler;
+    private final JLabel elapsedTimeLabel = new JLabel("Elapsed Time: 00:00");
 
     public SchedulerMonitorGUI(Map<Integer, Scheduler.DroneStatus> drones,
                                Queue<Incident> pending,
@@ -40,7 +41,7 @@ public class SchedulerMonitorGUI extends JFrame {
         setTitle("Scheduler Monitor");
         setSize(900, 600);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setLayout(new GridLayout(2, 2, 5, 5)); // Was: GridLayout(1, 3)
+        setLayout(new BorderLayout(5, 5));
         getContentPane().setBackground(BG_COLOR);
 
         // Create styled text panes instead of JTextArea
@@ -50,10 +51,22 @@ public class SchedulerMonitorGUI extends JFrame {
         faultArea = createStyledTextPane();
 
         // Add panels with titles
-        add(createTitledPanel("FAULT REPORTS", faultArea));
-        add(createTitledPanel("DRONES STATUS", dronesArea));
-        add(createTitledPanel("PENDING INCIDENTS", pendingArea));
-        add(createTitledPanel("COMPLETED INCIDENTS", completedArea));
+        elapsedTimeLabel.setFont(new Font("Consolas", Font.BOLD, 16));
+        elapsedTimeLabel.setForeground(HIGHLIGHT_COLOR);
+        elapsedTimeLabel.setHorizontalAlignment(SwingConstants.LEFT);
+        elapsedTimeLabel.setBorder(BorderFactory.createEmptyBorder(10, 15, 5, 0));
+        elapsedTimeLabel.setBackground(BG_COLOR);
+        elapsedTimeLabel.setOpaque(true);
+        add(elapsedTimeLabel, BorderLayout.NORTH);
+        JPanel gridPanel = new JPanel(new GridLayout(2, 2, 5, 5));
+        gridPanel.setBackground(BG_COLOR);
+
+        gridPanel.add(createTitledPanel("FAULT REPORTS", faultArea));
+        gridPanel.add(createTitledPanel("DRONES STATUS", dronesArea));
+        gridPanel.add(createTitledPanel("PENDING INCIDENTS", pendingArea));
+        gridPanel.add(createTitledPanel("COMPLETED INCIDENTS", completedArea));
+
+        add(gridPanel, BorderLayout.CENTER);
 
         // Update more frequently for responsive UI
         new Timer(100, (ActionEvent e) -> updateDisplays()).start();
@@ -89,6 +102,7 @@ public class SchedulerMonitorGUI extends JFrame {
     }
 
     private void updateDisplays() {
+        elapsedTimeLabel.setText(scheduler.getElapsedTimeFormatted());
         updateDronesArea();
         updatePendingArea();
         updateCompletedArea();
