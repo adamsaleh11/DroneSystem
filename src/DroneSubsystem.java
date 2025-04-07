@@ -47,6 +47,9 @@ public class DroneSubsystem implements Runnable {
         if (sendSocket != null && !sendSocket.isClosed()) sendSocket.close();
     }
 
+    /**
+     * Function invoked when thread is intialized
+     */
     @Override
     public void run() {
         System.out.println("The drone system has been deployed. Waiting on instructions to proceed further.\n");
@@ -60,6 +63,10 @@ public class DroneSubsystem implements Runnable {
         }
     }
 
+    /**
+     * The function is used to wait for messages from the scheduler. Once it receives an assignment
+     * it calls helper function to update its movement and state
+     */
     private void listenForAssignments() {
         try {
             System.out.println("Drone " + droneID + " listening for assignments on port " + (DRONE_PORT + droneID));
@@ -104,7 +111,12 @@ public class DroneSubsystem implements Runnable {
         }
     }
 
-
+    /**
+     * This helper function is called whenever an assignment has been to the drone
+     * @param incident
+     * @param targetX
+     * @param targetY
+     */
     private void handleAssignment(Incident incident, int targetX, int targetY) {
         if (incident != null && waterCapacity >= incident.getWaterAmountNeeded()) {
             this.currentIncident = incident;
@@ -116,6 +128,14 @@ public class DroneSubsystem implements Runnable {
         }
     }
 
+    /**
+     * This function simulates travelling from the drones current position to the assignment position
+     * We use pythogoreon theorum to simulate the distance between coordinates. We assume that each coordinate
+     * based system is to a ratio of 1.
+     * @param incident
+     * @param targetX
+     * @param targetY
+     */
     public void simulateTravel(Incident incident, int targetX, int targetY) {
         distanceTraveled += Math.hypot(targetX - xPosition, targetY-yPosition);
         try {
@@ -182,6 +202,10 @@ public class DroneSubsystem implements Runnable {
         }
     }
 
+    /**
+     * This function is called when a fault is injected into a drone. It aborts
+     * the current assignment if its called.
+     */
     private void abortMissionDueToFault() {
         System.out.println("Drone " + droneID + " aborting mission due to fault.");
 
@@ -203,6 +227,11 @@ public class DroneSubsystem implements Runnable {
         sendStatusUpdate();
     }
 
+    /**
+     * This function is called to simualte to drone relaying back to the scheduler to reassign
+     * an assignment if it doesnt have enough water capacity or if a fault is injected
+     * @param incident
+     */
     private void sendReassignRequest(Incident incident) {
         try {
             String message = String.format("Reassign,%d,%d,%s,%s,%d,%s",
@@ -224,7 +253,9 @@ public class DroneSubsystem implements Runnable {
         }
     }
 
-
+    /**
+     * This helper function is called to simulate the drone returning back to the origin base
+     */
     void returnToBaseAndReset() {
         try {
             // Set state to RETURNING to block new assignments.
@@ -251,6 +282,13 @@ public class DroneSubsystem implements Runnable {
         }
     }
 
+    /**
+     * This function is used to help the drone assess whether it needs to inject or fault
+     * or not
+     * @param duration
+     * @return
+     * @throws InterruptedException
+     */
     private boolean waitOrPause(int duration) throws InterruptedException {
         long end = System.currentTimeMillis() + duration;
         while (System.currentTimeMillis() < end) {
@@ -265,12 +303,18 @@ public class DroneSubsystem implements Runnable {
         return false;
     }
 
+    /**
+     * Forces the drone to return to idle state if it recovers from a fault
+     */
     private void forceRecovery() {
         System.out.println("Drone " + droneID + " FORCE-RECOVERING from fault state.");
         setState(DroneState.IDLE);
         enableCountdown();
     }
 
+    /**
+     * Helper function used to inject the fault
+     */
     public void injectFault() {
         String faultMessage = null;
         switch (currentState) {
@@ -286,6 +330,9 @@ public class DroneSubsystem implements Runnable {
         }
     }
 
+    /**
+     * Helper function used to send a status update via UDP to the scheduler
+     */
     private void sendStatusUpdate() {
         try {
             String message = String.format("Drone,%d,%d,%d,%s", droneID, xPosition, yPosition, currentState);
@@ -297,6 +344,10 @@ public class DroneSubsystem implements Runnable {
         }
     }
 
+    /**
+     * Helper function used to send a message update via UDP to the scheduler
+     * @param faultMessage
+     */
     private void sendFaultMessageToScheduler(String faultMessage) {
         try {
             String message = String.format("Drone %d Fault: %s", droneID, faultMessage);
@@ -308,6 +359,10 @@ public class DroneSubsystem implements Runnable {
         }
     }
 
+    /**
+     * Helper function used to send a completion update via UDP to the scheduler
+     * @param incident
+     */
     private void sendCompletionMessage(Incident incident) {
         try {
             String message = String.format("Complete,%d,%d,%s,%s,%s", droneID, incident.getZone(),
@@ -320,6 +375,10 @@ public class DroneSubsystem implements Runnable {
         }
     }
 
+    /**
+     * Helper function to set the state of the drone
+     * @param newState
+     */
     public void setState(DroneState newState) {
         this.currentState = newState;
         sendStatusUpdate();
@@ -329,6 +388,9 @@ public class DroneSubsystem implements Runnable {
         isCountdownActive = true;
     }
 
+    /**
+     * states of the drone
+     */
     public enum DroneState {
         IDLE, EN_ROUTE, DROPPING_AGENT, RETURNING, OFFLINE, FAULT
     }
