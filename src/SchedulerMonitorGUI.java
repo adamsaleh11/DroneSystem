@@ -52,7 +52,7 @@ public class SchedulerMonitorGUI extends JFrame {
 
         // Add panels with titles
         elapsedTimeLabel.setFont(new Font("Consolas", Font.BOLD, 16));
-        elapsedTimeLabel.setForeground(HIGHLIGHT_COLOR);
+        elapsedTimeLabel.setForeground(HEADER_COLOR);
         elapsedTimeLabel.setHorizontalAlignment(SwingConstants.LEFT);
         elapsedTimeLabel.setBorder(BorderFactory.createEmptyBorder(10, 15, 5, 0));
         elapsedTimeLabel.setBackground(BG_COLOR);
@@ -208,7 +208,7 @@ public class SchedulerMonitorGUI extends JFrame {
                     if (status.currentIncident != null) {
                         double distance = scheduler.getDistanceToIncident(id);
                         doc.insertString(doc.getLength(), " Distance: ", defaultStyle);
-                        doc.insertString(doc.getLength(), String.format("%.2f units", distance), valueStyle);
+                        doc.insertString(doc.getLength(), String.format("%.2f meters", distance), valueStyle);
                     }
                     doc.insertString(doc.getLength(), "\n", defaultStyle);
                     doc.insertString(doc.getLength(), "\n", defaultStyle);
