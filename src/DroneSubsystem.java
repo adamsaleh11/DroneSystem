@@ -137,7 +137,10 @@ public class DroneSubsystem implements Runnable {
      * @param targetY
      */
     public void simulateTravel(Incident incident, int targetX, int targetY) {
-        distanceTraveled += Math.hypot(targetX - xPosition, targetY-yPosition);
+        double distance = Math.hypot(targetX - xPosition, targetY-yPosition);
+        distanceTraveled += distance;
+        double speedMps = 30.0 * 1000 / 3600.0; // 30 km/h -> meters per second (≈8.33 m/s)
+        int travelTimeMs = (int) (distance / speedMps * 1000); // total time in milliseconds
         try {
             if (faultInjected) {
                 System.out.println("Fault injected before travel began.");
@@ -147,7 +150,7 @@ public class DroneSubsystem implements Runnable {
 
             Random random = new Random();
             int travelTime = (random.nextInt(7) + 3) * 1000;
-            int steps = 5;
+            int steps = 10;
             setState(DroneState.EN_ROUTE);
             sendStatusUpdate();
             for (int i = 1; i <= steps; i++) {
@@ -160,7 +163,7 @@ public class DroneSubsystem implements Runnable {
                 xPosition += (targetX - xPosition) / (steps - i + 1);
                 yPosition += (targetY - yPosition) / (steps - i + 1);
                 sendStatusUpdate();
-                Thread.sleep(500);
+                Thread.sleep(travelTimeMs/steps);
                 if (!waitOrPause(travelTime / steps)) return;
             }
 
@@ -189,7 +192,7 @@ public class DroneSubsystem implements Runnable {
                 xPosition -= xPosition / (steps - i + 1);
                 yPosition -= yPosition / (steps - i + 1);
                 sendStatusUpdate();
-                Thread.sleep(500);
+                Thread.sleep(travelTimeMs/steps);
                 if (!waitOrPause(travelTime / steps)) return;
             }
 
