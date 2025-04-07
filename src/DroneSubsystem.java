@@ -225,7 +225,7 @@ public class DroneSubsystem implements Runnable {
     }
 
 
-    private void returnToBaseAndReset() {
+    void returnToBaseAndReset() {
         try {
             // Set state to RETURNING to block new assignments.
             setState(DroneState.RETURNING);

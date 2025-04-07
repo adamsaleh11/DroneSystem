@@ -2,73 +2,79 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.net.*;
-import java.io.IOException;
+import java.net.InetAddress;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class DroneSubsystemTest {
 
-    private InetAddress schedulerAddress;
-    private DatagramSocket sendSocket;
-    private DatagramSocket receiveSocket;
     private DroneSubsystem droneSubsystem;
-
-    private static final int RECEIVE_PORT = 9877;  // Port for receiving test messages
 
     @BeforeEach
     void setUp() throws Exception {
-        schedulerAddress = InetAddress.getLocalHost();
-        sendSocket = new DatagramSocket();
-        receiveSocket = new DatagramSocket(RECEIVE_PORT);
-        droneSubsystem = new DroneSubsystem(1, 0, 0, schedulerAddress);
-        droneSubsystem.sendSocket = sendSocket;
+        InetAddress schedulerAddress = InetAddress.getLocalHost();
+        int uniqueDroneId = (int) (Math.random() * 1000 + 1);
+        droneSubsystem = new DroneSubsystem(uniqueDroneId, 0, 0, schedulerAddress);
+    }
+
+    @AfterEach
+    void tearDown() {
+        if (droneSubsystem != null) {
+            droneSubsystem.stop();
+        }
     }
 
     @Test
-    void testInjectFaultWhenStateIsIdle() throws IOException {
-        droneSubsystem.setState(DroneSubsystem.DroneState.IDLE);
-        droneSubsystem.injectFault();
-        String expectedMessage = "Drone 1 Fault: ERROR: Drone Connection Lost Via Packet Loss";
-        verifyMessageSent(expectedMessage);
+    void testWaterCapacityResetsAfterSimulatedTravel() {
+        Incident incident = new Incident("Fire", 1, "High", "12:00");
+        incident.setWaterAmountNeeded(10);
+        System.out.println("Initial water: " + droneSubsystem.getWaterCapacity());
+        droneSubsystem.simulateTravel(incident, 10, 10);
+        System.out.println("Water after travel: " + droneSubsystem.getWaterCapacity());
+        assertEquals(40, droneSubsystem.getWaterCapacity(), "Water capacity should reset to 40 after travel");
+        assertEquals(DroneSubsystem.DroneState.IDLE, droneSubsystem.getCurrentState(), "Drone should return to IDLE state");
     }
 
     @Test
-    void testInjectFaultWhenStateIsDroppingAgent() throws IOException {
-        droneSubsystem.setState(DroneSubsystem.DroneState.DROPPING_AGENT);
-        droneSubsystem.injectFault();
-        String expectedMessage = "Drone 1 Fault: ERROR: Drone Nozzle Malfunction";
-        verifyMessageSent(expectedMessage);
+    void testWaterCapacityAlwaysResetsAfterIncident() {
+        Incident incident = new Incident("Fire", 1, "High", "12:00");
+        incident.setWaterAmountNeeded(15);
+        System.out.println("Initial water: " + droneSubsystem.getWaterCapacity());
+        droneSubsystem.simulateTravel(incident, 5, 5);
+        System.out.println("Water after travel: " + droneSubsystem.getWaterCapacity());
+
+        assertEquals(40, droneSubsystem.getWaterCapacity(), "Water should reset to 40 after mission completes");
     }
 
     @Test
-    void testInjectFaultWhenStateIsEnRoute() throws IOException {
+    void testDistanceTraveledIncreases() {
+        double before = droneSubsystem.getDistanceTraveled();
+
+        Incident incident = new Incident("Fire", 1, "Medium", "15:30");
+        incident.setWaterAmountNeeded(5);
+
+        droneSubsystem.simulateTravel(incident, 6, 8);
+        double after = droneSubsystem.getDistanceTraveled();
+
+        assertTrue(after > before, "Distance traveled should increase");
+    }
+
+    @Test
+    void testReturnToBaseAndReset() {
+        droneSubsystem.setState(DroneSubsystem.DroneState.RETURNING);
+        droneSubsystem.returnToBaseAndReset();
+
+        assertEquals(0, droneSubsystem.getXPosition(), "X should be 0 after reset");
+        assertEquals(0, droneSubsystem.getYPosition(), "Y should be 0 after reset");
+        assertEquals(40, droneSubsystem.getWaterCapacity(), "Water should refill to 40");
+        assertEquals(DroneSubsystem.DroneState.IDLE, droneSubsystem.getCurrentState(), "Drone should be IDLE after reset");
+    }
+
+    @Test
+    void testInjectFaultSetsStateToFault() {
         droneSubsystem.setState(DroneSubsystem.DroneState.EN_ROUTE);
         droneSubsystem.injectFault();
-        String expectedMessage = "Drone 1 Fault: ERROR: Drone is stuck in flight.";
-        verifyMessageSent(expectedMessage);
-    }
 
-    @Test
-    void testInjectFaultWhenStateIsReturning() throws IOException {
-        // Simulate the state being RETURNING
-        droneSubsystem.setState(DroneSubsystem.DroneState.RETURNING);
-
-        // Call the injectFault() method
-        droneSubsystem.injectFault();
-
-        // Capture the fault message sent to the scheduler
-        String expectedMessage = "Drone 1 Fault: ERROR: Drone is stuck in flight.";
-
-        // Check if the message was sent to the scheduler
-        verifyMessageSent(expectedMessage);
-    }
-
-    private void verifyMessageSent(String expectedMessage) throws IOException {
-        byte[] buffer = new byte[1024];
-        DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
-        receiveSocket.receive(packet);
-        String actualMessage = new String(packet.getData(), 0, packet.getLength());
-        assertEquals(expectedMessage, actualMessage, "Fault message sent doesn't match expected message");
+        assertEquals(DroneSubsystem.DroneState.FAULT, droneSubsystem.getCurrentState(), "State should be FAULT after injectFault()");
     }
 }

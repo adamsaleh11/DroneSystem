@@ -17,7 +17,6 @@ public class Scheduler {
     private final List<Incident> completedIncidents = new ArrayList<>();
     private final List<Zone> zones = new ArrayList<>();
     private final Map<Integer, DroneStatus> allDrones = new ConcurrentHashMap<>();
-    // Set to track completed incident IDs and prevent duplicate completions
     Set<String> completedIncidentIDs = new HashSet<>();
 
     private boolean shouldRun = true;
@@ -28,6 +27,10 @@ public class Scheduler {
     private LocalDateTime firstIncidentReceived = null;
     private LocalDateTime lastIncidentCompleted = null;
 
+    /**
+     * Main Function that initalizes the scheduler and Monitor GUI
+     * @param args
+     */
     public static void main(String[] args) {
         System.out.println("=== SCHEDULER SUBSYSTEM STARTING ===");
         Scanner scanner = new Scanner(System.in);
@@ -35,8 +38,8 @@ public class Scheduler {
         try {
             Scheduler scheduler = new Scheduler();
 
-            System.out.print("Enter zones file path (press Enter for default 'src/resources/Sample_zone_file.csv'): ");
-            String zonesPath = scanner.nextLine().trim();
+//            System.out.print("Enter zones file path (press Enter for default 'src/resources/Sample_zone_file.csv'): ");
+            String zonesPath = "";
             if (zonesPath.isEmpty()) zonesPath = "src/resources/Sample_zone_file.csv";
 
             scheduler.loadZones(zonesPath);
@@ -60,6 +63,9 @@ public class Scheduler {
         }
     }
 
+    /**
+     * Start function that starts all threads for listening and processing incidents and drone updates
+     */
     public void start() {
         receiveIncidents = new Thread(this::listenForIncidents);
         receiveDrones = new Thread(this::listenForDroneUpdates);
@@ -70,6 +76,9 @@ public class Scheduler {
         processIncidents.start();
     }
 
+    /**
+     * Stop function to stop all threads upon request
+     */
     public void stop() {
         shouldRun = false;
         try {
@@ -87,6 +96,9 @@ public class Scheduler {
         }
     }
 
+    /**
+     * Function that opens UDP port to listen for incidents from the FireIncidentSubsystem
+     */
     private void listenForIncidents() {
         try (DatagramSocket socket = new DatagramSocket(SCHEDULER_PORT)) {
             socket.setSoTimeout(1000);
@@ -117,6 +129,9 @@ public class Scheduler {
         }
     }
 
+    /**
+     * Function that listens for DroneUpdates via UDP port, handles requests beginning with Reassign, Fault, and Complete
+     */
     private void listenForDroneUpdates() {
         try (DatagramSocket socket = new DatagramSocket(DRONE_PORT)) {
             socket.setSoTimeout(1000);
@@ -213,6 +228,15 @@ public class Scheduler {
         }
     }
 
+    /**
+     * Updates the drone status in the list that tracks all drones
+     * @param id drone id
+     * @param x drone x coord
+     * @param y drone y coord
+     * @param address drone ip address
+     * @param state drone state
+     * @param available if drone is available to be assigned an incident
+     */
     private void updateDroneStatus(int id, int x, int y, InetAddress address, String state, boolean available) {
         allDrones.compute(id, (droneId, status) -> {
             if (status == null) {
@@ -229,6 +253,9 @@ public class Scheduler {
         });
     }
 
+    /**
+     * Function which processes pending incidents.
+     */
     private void processPendingIncidents() {
         try {
             while (shouldRun) {
@@ -236,7 +263,6 @@ public class Scheduler {
                     Incident incident = pendingIncidents.poll();
                     boolean assigned = assignDrone(incident);
                     if (!assigned) {
-                        // Re-queue the incident
                         pendingIncidents.offer(incident);
                     }
                 }
@@ -247,6 +273,11 @@ public class Scheduler {
         }
     }
 
+    /**
+     * Function which assigns and incident to a drone, if not add to pending queue
+     * @param incident
+     * @return true or false if available to assign
+     */
     public boolean assignDrone(Incident incident) {
         Zone zone = getZoneById(incident.getZone());
         if (zone == null) return false;
@@ -303,7 +334,7 @@ public class Scheduler {
         if (best != null) {
             if (isReroute && best.currentIncident != null) {
                 pendingIncidents.add(best.currentIncident);
-                pendingIncidentIDs.add(best.currentIncident.getIncidentID());  // <-- also re-track it
+                pendingIncidentIDs.add(best.currentIncident.getIncidentID());
                 best.hasBeenRerouted = true;
                 scheduleRerouteReset(best.droneInfo.id);
             }
@@ -325,7 +356,11 @@ public class Scheduler {
         return false;
     }
 
-    // Helper method to determine severity priority
+    /**
+     * Returns the severity in form of a number based on the string
+     * @param severity
+     * @return
+     */
     private int getSeverityPriority(String severity) {
         switch(severity.toUpperCase()) {
             case "HIGH": return 3;
@@ -335,7 +370,10 @@ public class Scheduler {
         }
     }
 
-    // Schedule resetting of the rerouted flag
+    /**
+     * Function timesout reroute possiblity for a drone so it doesn't get in a loop of constantly being rerouted.
+     * @param droneId
+     */
     private void scheduleRerouteReset(int droneId) {
         Timer timer = new Timer();
         timer.schedule(new TimerTask() {
@@ -346,9 +384,16 @@ public class Scheduler {
                     status.hasBeenRerouted = false;
                 }
             }
-        }, 60000); // Reset after 1 minute
+        }, 60000);
     }
 
+    /**
+     * Function to send UDP message for drone assignment to drone subsystem.
+     * @param drone Drone object
+     * @param inc incident object
+     * @param x x coordinate
+     * @param y y coordinate
+     */
     private void sendDroneAssignment(DroneInfo drone, Incident inc, int x, int y) {
         try (DatagramSocket socket = new DatagramSocket()) {
             String msg = String.format("Assign,%d,%d,%d,%s,%s,%d,%s",
@@ -378,9 +423,13 @@ public class Scheduler {
         return completedIncidents;
     }
 
+    /**
+     * Function to load zones into scheduler
+     * @param file input file
+     */
     public void loadZones(String file) {
         try (BufferedReader br = new BufferedReader(new FileReader(file))) {
-            br.readLine(); // skip header
+            br.readLine();
             String line;
             while ((line = br.readLine()) != null) {
                 String[] parts = line.split(",");
@@ -395,6 +444,11 @@ public class Scheduler {
         }
     }
 
+    /**
+     * Function to process drone fault on scheduler side, responds to drone with correct response and marks it as unavailable for assingment in addition to printing
+     * the drone fault for debugging purposes
+     * @param message UDP message
+     */
     private void processDroneFault(String message) {
         System.out.println("\n####################################");
         System.out.println("#####        DRONE FAULT       #####");
@@ -467,6 +521,10 @@ public class Scheduler {
         System.out.println("####################################\n");
     }
 
+    /**
+     * Function to reassign and incident from a faulty drone. Adds incident back to pending incidents.
+     * @param droneId
+     */
     private void reassignIncident(int droneId) {
         DroneStatus status = allDrones.get(droneId);
         if (status != null) {
@@ -480,14 +538,26 @@ public class Scheduler {
         }
     }
 
+    /**
+     * function for nozzle failure
+     * @param droneId
+     */
     private void forceNozzle(int droneId) {
         System.out.println("Nozzle Malfunction, drone returning to base");
     }
 
+    /**
+     * function for packet loss failure
+     * @param droneId
+     */
     private void establishConnection(int droneId) {
         System.out.println("Re-establishing Connection, drone returning to base");
     }
 
+    /** Function to reset drone after one second and resetting fault flags.
+     *
+     * @param droneId
+     */
     private void resetDroneToWorking(int droneId) {
         try {
             Thread.sleep(1000);
@@ -501,6 +571,10 @@ public class Scheduler {
             sendCountdownResetCommand(status.droneInfo);
         }
     }
+
+    /**
+     * function to check if incidents are all completed
+     */
     private void checkIfAllIncidentsCompleted() {
         if (firstIncidentReceived != null &&
                 !pendingIncidentIDs.isEmpty() &&
@@ -515,6 +589,10 @@ public class Scheduler {
         }
     }
 
+    /**
+     * Function to send UDP message resetting drone
+     * @param drone
+     */
     private void sendCountdownResetCommand(DroneInfo drone) {
         try (DatagramSocket socket = new DatagramSocket()) {
             String message = "ResetCountdown";
@@ -527,6 +605,10 @@ public class Scheduler {
         }
     }
 
+    /**
+     * function to format the elapsed time of the fires happening
+     * @return
+     */
     public String getElapsedTimeFormatted() {
         if (firstIncidentReceived == null) return "Waiting for first incident...";
         LocalDateTime end = (lastIncidentCompleted != null) ? lastIncidentCompleted : LocalDateTime.now();
@@ -537,6 +619,11 @@ public class Scheduler {
         return String.format("Elapsed Time: %02d:%02d", min, sec);
     }
 
+    /**
+     * function that get the distance a drone is from an incident.
+     * @param droneId
+     * @return
+     */
     public double getDistanceToIncident(int droneId) {
         DroneStatus status = allDrones.get(droneId);
         if (status == null || status.currentIncident == null) return 0.0;
@@ -551,6 +638,9 @@ public class Scheduler {
         return Math.hypot(x2 - x1, y2 - y1);
     }
 
+    /**
+     * Drone info class
+     */
     static class DroneInfo {
         int id, x, y;
         InetAddress address;
@@ -567,11 +657,11 @@ public class Scheduler {
 
     static class DroneStatus {
         DroneInfo droneInfo;
-        String state = "UNKNOWN";  // Now includes "EN_ROUTE" state
+        String state = "UNKNOWN";
         boolean isAvailable = false;
         String faultMessage = null;
         Incident currentIncident = null;
-        boolean hasBeenRerouted = false;  // Track if drone was recently rerouted
+        boolean hasBeenRerouted = false;
 
         DroneStatus(DroneInfo info) {
             this.droneInfo = info;
