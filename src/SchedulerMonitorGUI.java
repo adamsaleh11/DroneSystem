@@ -208,7 +208,7 @@ public class SchedulerMonitorGUI extends JFrame {
                     if (status.currentIncident != null) {
                         double distance = scheduler.getDistanceToIncident(id);
                         doc.insertString(doc.getLength(), " Distance: ", defaultStyle);
-                        doc.insertString(doc.getLength(), String.format("%.2f units", distance), valueStyle);
+                        doc.insertString(doc.getLength(), String.format("%.2f meters", distance), valueStyle);
                     }
                     doc.insertString(doc.getLength(), "\n", defaultStyle);
                     doc.insertString(doc.getLength(), "\n", defaultStyle);
