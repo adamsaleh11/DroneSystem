@@ -263,7 +263,7 @@ public class DroneSubsystem implements Runnable {
         try {
             // Set state to RETURNING to block new assignments.
             setState(DroneState.RETURNING);
-            int steps = 5;
+            int steps = 10;
             int travelTime = 3000;
             for (int i = 1; i <= steps; i++) {
                 // Update position gradually to simulate travel.
