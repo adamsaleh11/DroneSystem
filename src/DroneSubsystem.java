@@ -430,6 +430,11 @@ public class DroneSubsystem implements Runnable {
             scanner.close();
         }
     }
+
+    /**
+     * Helper functions used to retrieve private members of the drone
+     * @return
+     */
     public boolean isRunning() {
         return shouldRun;
     }

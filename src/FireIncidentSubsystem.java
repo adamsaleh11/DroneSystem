@@ -8,6 +8,11 @@ public class FireIncidentSubsystem implements Runnable {
     private final InetAddress schedulerAddress;
     private volatile boolean shouldRun = true;
 
+    /**
+     * Constructor for the subsystem
+     * @param csvFile
+     * @param schedulerAddress
+     */
     public FireIncidentSubsystem(String csvFile, InetAddress schedulerAddress) {
         this.csvFile = csvFile;
         this.schedulerAddress = schedulerAddress;
@@ -21,6 +26,9 @@ public class FireIncidentSubsystem implements Runnable {
         return shouldRun;
     }
 
+    /**
+     * Function which is invoked when the thread starts
+     */
     @Override
     public void run() {
         if (shouldRun) {
@@ -28,6 +36,9 @@ public class FireIncidentSubsystem implements Runnable {
         }
     }
 
+    /**
+     * Helper function used to read incidents from the csv logs
+     */
     private void readIncidentsFromCSV() {
         try (BufferedReader br = new BufferedReader(new FileReader(csvFile))) {
             String line;
@@ -56,6 +67,10 @@ public class FireIncidentSubsystem implements Runnable {
         }
     }
 
+    /**
+     * Helper function to send the incidents to the scheduler via UDP
+     * @param incident
+     */
     private void sendIncidentToScheduler(Incident incident) {
         try {
             DatagramSocket socket = new DatagramSocket();
