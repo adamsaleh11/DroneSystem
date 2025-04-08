@@ -138,7 +138,7 @@ public class DroneSubsystem implements Runnable {
      */
     public void simulateTravel(Incident incident, int targetX, int targetY) {
         double distance = Math.hypot(targetX - xPosition, targetY-yPosition);
-        distanceTraveled += distance;
+        distanceTraveled += distance * 2;
         double speedMps = 30.0 * 1000 / 3600.0; // 30 km/h -> meters per second (≈8.33 m/s)
         int travelTimeMs = (int) (distance / speedMps * 1000); // total time in milliseconds
         try {
