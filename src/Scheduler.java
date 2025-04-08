@@ -40,7 +40,7 @@ public class Scheduler {
 
 //            System.out.print("Enter zones file path (press Enter for default 'src/resources/Sample_zone_file.csv'): ");
             String zonesPath = "";
-            if (zonesPath.isEmpty()) zonesPath = "src/resources/Sample_zone_file.csv";
+            if (zonesPath.isEmpty()) zonesPath = "src/resources/Final_zone_file.csv";
 
             scheduler.loadZones(zonesPath);
             scheduler.start();

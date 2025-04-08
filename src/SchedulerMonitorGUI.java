@@ -204,14 +204,14 @@ public class SchedulerMonitorGUI extends JFrame {
                     doc.insertString(doc.getLength(), " Zone: ", defaultStyle);
                     Style zoneStyle = zone.equals("None") ? defaultStyle : alertStyle;
                     doc.insertString(doc.getLength(), zone, zoneStyle);
-                    doc.insertString(doc.getLength(), "\n", defaultStyle);
+//                    doc.insertString(doc.getLength(), "\n", defaultStyle);
                     if (status.currentIncident != null) {
                         double distance = scheduler.getDistanceToIncident(id);
                         doc.insertString(doc.getLength(), " Distance: ", defaultStyle);
                         doc.insertString(doc.getLength(), String.format("%.2f meters", distance), valueStyle);
                     }
                     doc.insertString(doc.getLength(), "\n", defaultStyle);
-                    doc.insertString(doc.getLength(), "\n", defaultStyle);
+//                    doc.insertString(doc.getLength(), "\n", defaultStyle);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }

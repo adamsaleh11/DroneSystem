@@ -116,10 +116,10 @@ public class FireIncidentSubsystem implements Runnable {
                 schedulerAddress = InetAddress.getByName(ipAddress);
             }
 
-            System.out.print("Enter CSV file path (press Enter for default 'src/resources/Sample_event_file.csv'): ");
+            System.out.print("Enter CSV file path (press Enter for default 'src/resources/Final_event_file.csv'): ");
             String csvPath = scanner.nextLine().trim();
             if (csvPath.isEmpty()) {
-                csvPath = "src/resources/Sample_event_file.csv";
+                csvPath = "src/resources/Final_event_file.csv";
             }
 
             System.out.println("Using CSV file: " + csvPath);
