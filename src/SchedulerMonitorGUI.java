@@ -28,7 +28,7 @@ public class SchedulerMonitorGUI extends JFrame {
     private final List<Incident> completedIncidents;
     private final Scheduler scheduler;
     private final JLabel elapsedTimeLabel = new JLabel("Elapsed Time: 00:00");
-
+    private final MapPanel mapPanel;
     public SchedulerMonitorGUI(Map<Integer, Scheduler.DroneStatus> drones,
                                Queue<Incident> pending,
                                List<Incident> completed,
@@ -37,6 +37,14 @@ public class SchedulerMonitorGUI extends JFrame {
         this.pendingIncidents = pending;
         this.completedIncidents = completed;
         this.scheduler = scheduler;
+        this.mapPanel = new MapPanel(
+                scheduler,
+                BG_COLOR,
+                HEADER_COLOR,   // zone outline
+                VALUE_COLOR,    // drone dot
+                ALERT_COLOR     // incident marker
+        );
+
 
         setTitle("Scheduler Monitor");
         setSize(900, 600);
@@ -67,7 +75,7 @@ public class SchedulerMonitorGUI extends JFrame {
         gridPanel.add(createTitledPanel("COMPLETED INCIDENTS", completedArea));
 
         add(gridPanel, BorderLayout.CENTER);
-
+        add(mapPanel, BorderLayout.EAST);
         // Update more frequently for responsive UI
         new Timer(100, (ActionEvent e) -> updateDisplays()).start();
 
@@ -107,6 +115,7 @@ public class SchedulerMonitorGUI extends JFrame {
         updatePendingArea();
         updateCompletedArea();
         updateFaultArea();
+        mapPanel.repaint();
     }
 
     private void updateFaultArea() {
@@ -290,3 +299,94 @@ public class SchedulerMonitorGUI extends JFrame {
         }
     }
 }
+
+class MapPanel extends JPanel {
+    private final Scheduler scheduler;
+    private final Color bgColor, zoneColor, droneColor, incidentColor;
+
+    public MapPanel(Scheduler scheduler, Color bgColor, Color zoneColor, Color droneColor, Color incidentColor) {
+        this.scheduler = scheduler;
+        this.bgColor = bgColor;
+        this.zoneColor = zoneColor;
+        this.droneColor = droneColor;
+        this.incidentColor = incidentColor;
+
+        setPreferredSize(new Dimension(500, 500));
+        setBackground(bgColor);
+    }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        List<Zone> zones = scheduler.getZones();
+        Map<Integer, Scheduler.DroneStatus> drones = scheduler.getAllDrones();
+
+        int minX = Integer.MAX_VALUE, minY = Integer.MAX_VALUE;
+        int maxX = Integer.MIN_VALUE, maxY = Integer.MIN_VALUE;
+        for (Zone z : zones) {
+            int sx = z.getStartX() / 10;
+            int sy = z.getStartY() / 10;
+            int ex = z.getEndX() / 10;
+            int ey = z.getEndY() / 10;
+            minX = Math.min(minX, sx);
+            minY = Math.min(minY, sy);
+            maxX = Math.max(maxX, ex);
+            maxY = Math.max(maxY, ey);
+        }
+
+        int mapWidth = maxX - minX;
+        int mapHeight = maxY - minY;
+        int panelWidth = getWidth();
+        int panelHeight = getHeight();
+        int offsetX = (panelWidth - mapWidth) / 2 - minX;
+        int offsetY = (panelHeight - mapHeight) / 2 - minY;
+
+        Graphics2D g2 = (Graphics2D) g;
+        g2.setColor(zoneColor);
+
+        Set<String> activeIncidentIDs = new HashSet<>();
+        Queue<Incident> pending = scheduler.getPendingIncidents();
+        for (Incident i : pending) activeIncidentIDs.add(i.getIncidentID());
+        for (Scheduler.DroneStatus status : drones.values()) {
+            if (status.currentIncident != null) {
+                activeIncidentIDs.add(status.currentIncident.getIncidentID());
+            }
+        }
+
+        for (Zone zone : zones) {
+            int x = zone.getStartX() / 10 + offsetX;
+            int y = zone.getStartY() / 10 + offsetY;
+            int width = (zone.getEndX() - zone.getStartX()) / 10;
+            int height = (zone.getEndY() - zone.getStartY()) / 10;
+            g2.drawRect(x, y, width, height);
+
+            boolean hasIncident = false;
+            for (Incident inc : pending) {
+                if (inc.getZone() == zone.getId()) {
+                    hasIncident = true;
+                    break;
+                }
+            }
+            for (Scheduler.DroneStatus status : drones.values()) {
+                if (status.currentIncident != null && status.currentIncident.getZone() == zone.getId()) {
+                    hasIncident = true;
+                    break;
+                }
+            }
+
+            if (hasIncident) {
+                g2.setColor(incidentColor);
+                g2.fillOval(x + width / 2 - 4, y + height / 2 - 4, 8, 8);
+                g2.setColor(zoneColor);
+            }
+        }
+
+        g2.setColor(droneColor);
+        for (Scheduler.DroneStatus drone : drones.values()) {
+            int dx = drone.droneInfo.x / 10 + offsetX;
+            int dy = drone.droneInfo.y / 10 + offsetY;
+            g2.fillOval(dx - 3, dy - 3, 6, 6);
+        }
+    }
+}
+

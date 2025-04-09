@@ -23,6 +23,22 @@ public class Zone {
         return (startY + endY) / 2;
     }
 
+    public int getStartX() {
+        return startX;
+    }
+
+    public int getStartY() {
+        return startY;
+    }
+
+    public int getEndX() {
+        return endX;
+    }
+
+    public int getEndY() {
+        return endY;
+    }
+
     @Override
     public String toString() {
         return "Zone " + id + ": (" + startX + "," + startY + ") to (" + endX + "," + endY + ")";

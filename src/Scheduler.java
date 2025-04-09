@@ -638,6 +638,10 @@ public class Scheduler {
         return Math.hypot(x2 - x1, y2 - y1);
     }
 
+    public List<Zone> getZones() {
+        return zones;
+    }
+
     /**
      * Drone info class
      */
