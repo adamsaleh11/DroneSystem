@@ -100,4 +100,7 @@ public class Incident {
     public String getCreationTimeFormatted() {
         return creationTime.format(formatter);
     }
+    public String getUniqueKey() {
+        return time + "|" + zone + "|" + eventType + "|" + severity;
+    }
 }

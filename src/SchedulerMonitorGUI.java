@@ -5,6 +5,10 @@ import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.List;
 
@@ -29,6 +33,10 @@ public class SchedulerMonitorGUI extends JFrame {
     private final Scheduler scheduler;
     private final JLabel elapsedTimeLabel = new JLabel("Elapsed Time: 00:00");
     private final MapPanel mapPanel;
+    private final String logFilePath = "log.txt";
+    private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    private final Set<String> loggedIncidents = new HashSet<>();
+
     public SchedulerMonitorGUI(Map<Integer, Scheduler.DroneStatus> drones,
                                Queue<Incident> pending,
                                List<Incident> completed,
@@ -44,8 +52,7 @@ public class SchedulerMonitorGUI extends JFrame {
                 VALUE_COLOR,    // drone dot
                 ALERT_COLOR     // incident marker
         );
-
-
+        initLogFile();
         setTitle("Scheduler Monitor");
         setSize(900, 600);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -59,7 +66,7 @@ public class SchedulerMonitorGUI extends JFrame {
         faultArea = createStyledTextPane();
 
         // Add panels with titles
-        elapsedTimeLabel.setFont(new Font("Consolas", Font.BOLD, 16));
+        elapsedTimeLabel.setFont(new Font("SansSerif", Font.BOLD, 16));
         elapsedTimeLabel.setForeground(HEADER_COLOR);
         elapsedTimeLabel.setHorizontalAlignment(SwingConstants.LEFT);
         elapsedTimeLabel.setBorder(BorderFactory.createEmptyBorder(10, 15, 5, 0));
@@ -110,7 +117,8 @@ public class SchedulerMonitorGUI extends JFrame {
     }
 
     private void updateDisplays() {
-        elapsedTimeLabel.setText(scheduler.getElapsedTimeFormatted());
+        String timeInfo = scheduler.getElapsedTimeFormatted();
+        elapsedTimeLabel.setText(timeInfo);
         updateDronesArea();
         updatePendingArea();
         updateCompletedArea();
@@ -153,19 +161,18 @@ public class SchedulerMonitorGUI extends JFrame {
 
                         // Auto-scroll to bottom
                         faultArea.setCaretPosition(doc.getLength());
+
+                        String logContent = "Drone " + id + ": " + current + " | Fix: " + fix;
+                        logToFile("FAULT REPORT", logContent);
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
-
-                    // Clear it so it gets printed only once
-                    status.faultMessage = null;
                 }
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
-
 
     private String diagnoseFix(String msg) {
         msg = msg.toLowerCase();
@@ -213,14 +220,12 @@ public class SchedulerMonitorGUI extends JFrame {
                     doc.insertString(doc.getLength(), " Zone: ", defaultStyle);
                     Style zoneStyle = zone.equals("None") ? defaultStyle : alertStyle;
                     doc.insertString(doc.getLength(), zone, zoneStyle);
-//                    doc.insertString(doc.getLength(), "\n", defaultStyle);
                     if (status.currentIncident != null) {
                         double distance = scheduler.getDistanceToIncident(id);
                         doc.insertString(doc.getLength(), " Distance: ", defaultStyle);
                         doc.insertString(doc.getLength(), String.format("%.2f meters", distance), valueStyle);
                     }
                     doc.insertString(doc.getLength(), "\n", defaultStyle);
-//                    doc.insertString(doc.getLength(), "\n", defaultStyle);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -248,8 +253,9 @@ public class SchedulerMonitorGUI extends JFrame {
 
         try {
             doc.remove(0, doc.getLength());
-
             for (Incident inc : pendingIncidents) {
+                String incidentID = inc.getIncidentID();
+
                 doc.insertString(doc.getLength(), "Zone ", defaultStyle);
                 doc.insertString(doc.getLength(), String.valueOf(inc.getZone()), zoneStyle);
                 doc.insertString(doc.getLength(), " | Type: ", defaultStyle);
@@ -257,9 +263,35 @@ public class SchedulerMonitorGUI extends JFrame {
                 doc.insertString(doc.getLength(), " | Sev: ", defaultStyle);
                 doc.insertString(doc.getLength(), inc.getSeverity(), sevStyle);
                 doc.insertString(doc.getLength(), "\n", defaultStyle);
+                
+                if (!loggedIncidents.contains(incidentID)) {
+                    String logContent = "Zone " + inc.getZone() + " | Type: " + inc.getEventType() +
+                            " | Sev: " + inc.getSeverity();
+                    logToFile("PENDING INCIDENT", logContent);
+                    loggedIncidents.add(incidentID);
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    private void initLogFile() {
+        try (PrintWriter writer = new PrintWriter(new FileWriter(logFilePath))) {
+            writer.println("========== SCHEDULER MONITOR LOG ==========");
+            writer.println("Started: " + dateFormat.format(new Date()));
+            writer.println("=========================================");
+            writer.println();
+        } catch (IOException e) {
+            System.err.println("Error initializing log file: " + e.getMessage());
+        }
+    }
+
+    private void logToFile(String category, String content) {
+        try (PrintWriter writer = new PrintWriter(new FileWriter(logFilePath, true))) {
+            writer.println(dateFormat.format(new Date()) + " - " + category + ": " + content);
+        } catch (IOException e) {
+            System.err.println("Error writing to log file: " + e.getMessage());
         }
     }
 
@@ -281,8 +313,9 @@ public class SchedulerMonitorGUI extends JFrame {
 
         try {
             doc.remove(0, doc.getLength());
-
             for (Incident inc : completedIncidents) {
+                String incidentID = inc.getIncidentID();
+
                 doc.insertString(doc.getLength(), "Zone ", defaultStyle);
                 doc.insertString(doc.getLength(), String.valueOf(inc.getZone()), zoneStyle);
                 doc.insertString(doc.getLength(), " | Type: ", defaultStyle);
@@ -293,6 +326,13 @@ public class SchedulerMonitorGUI extends JFrame {
                 String completionTime = inc.getCompletionTimeFormatted();
                 doc.insertString(doc.getLength(), completionTime, timeStyle);
                 doc.insertString(doc.getLength(), "\n", defaultStyle);
+
+                if (!loggedIncidents.contains("completed:" + incidentID)) {
+                    String logContent = "Zone " + inc.getZone() + " | Type: " + inc.getEventType() +
+                            " | Response Time: " + completionTime;
+                    logToFile("COMPLETED INCIDENT", logContent);
+                    loggedIncidents.add("completed:" + incidentID);
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -389,4 +429,3 @@ class MapPanel extends JPanel {
         }
     }
 }
-

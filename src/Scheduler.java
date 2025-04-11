@@ -273,7 +273,7 @@ public class Scheduler {
         }
     }
 
-    /**
+    /*
      * Function which assigns and incident to a drone, if not add to pending queue
      * @param incident
      * @return true or false if available to assign
