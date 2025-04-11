@@ -3,6 +3,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -33,6 +35,21 @@ class FireIncidentSubsystemTest {
         subsystem.run(); // Calls readIncidentsFromCSV()
 
         assertEquals(2, mockLan.getNumIncidents());
+    }
+
+    @Test
+    public void testUDPConnection() throws Exception {
+        DatagramSocket receiver = new DatagramSocket(TEST_PORT);
+        receiver.setSoTimeout(3000);
+        FireIncidentSubsystem fireSystem = new FireIncidentSubsystem("src/resources/Sample_event_file.csv", InetAddress.getLocalHost());
+        new Thread(fireSystem).start();
+        byte[] buffer = new byte[1024];
+        DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
+        receiver.receive(packet);
+        String msg = new String(packet.getData(), 0, packet.getLength());
+        assertTrue("First message should start with 'Incident'", msg.startsWith("Incident"));
+        fireSystem.stop();
+        receiver.close();
     }
 }
 
