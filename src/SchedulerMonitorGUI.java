@@ -13,7 +13,6 @@ import java.util.*;
 import java.util.List;
 
 public class SchedulerMonitorGUI extends JFrame {
-    // Terminal colors
     private static final Color BG_COLOR = new Color(18, 18, 18);
     private static final Color TEXT_COLOR = new Color(204, 204, 204);
     private static final Color HEADER_COLOR = new Color(129, 162, 190);
@@ -48,9 +47,9 @@ public class SchedulerMonitorGUI extends JFrame {
         this.mapPanel = new MapPanel(
                 scheduler,
                 BG_COLOR,
-                HEADER_COLOR,   // zone outline
-                VALUE_COLOR,    // drone dot
-                ALERT_COLOR     // incident marker
+                HEADER_COLOR,
+                VALUE_COLOR,
+                ALERT_COLOR
         );
         initLogFile();
         setTitle("Scheduler Monitor");
@@ -59,13 +58,11 @@ public class SchedulerMonitorGUI extends JFrame {
         setLayout(new BorderLayout(5, 5));
         getContentPane().setBackground(BG_COLOR);
 
-        // Create styled text panes instead of JTextArea
         dronesArea = createStyledTextPane();
         pendingArea = createStyledTextPane();
         completedArea = createStyledTextPane();
         faultArea = createStyledTextPane();
 
-        // Add panels with titles
         elapsedTimeLabel.setFont(new Font("SansSerif", Font.BOLD, 16));
         elapsedTimeLabel.setForeground(HEADER_COLOR);
         elapsedTimeLabel.setHorizontalAlignment(SwingConstants.LEFT);
@@ -83,7 +80,6 @@ public class SchedulerMonitorGUI extends JFrame {
 
         add(gridPanel, BorderLayout.CENTER);
         add(mapPanel, BorderLayout.EAST);
-        // Update more frequently for responsive UI
         new Timer(100, (ActionEvent e) -> updateDisplays()).start();
 
         setVisible(true);
@@ -159,7 +155,6 @@ public class SchedulerMonitorGUI extends JFrame {
                         doc.insertString(doc.getLength(), "Fix: ", defaultStyle);
                         doc.insertString(doc.getLength(), fix + "\n\n", fixStyle);
 
-                        // Auto-scroll to bottom
                         faultArea.setCaretPosition(doc.getLength());
 
                         String logContent = "Drone " + id + ": " + current + " | Fix: " + fix;
@@ -185,7 +180,6 @@ public class SchedulerMonitorGUI extends JFrame {
     private void updateDronesArea() {
         StyledDocument doc = dronesArea.getStyledDocument();
 
-        // Define styles
         Style defaultStyle = dronesArea.addStyle("default", null);
         StyleConstants.setForeground(defaultStyle, TEXT_COLOR);
 
@@ -322,7 +316,6 @@ public class SchedulerMonitorGUI extends JFrame {
                 doc.insertString(doc.getLength(), inc.getEventType(), typeStyle);
                 doc.insertString(doc.getLength(), " | Response Time: ", defaultStyle);
 
-                // Show completion time instead of timestamp
                 String completionTime = inc.getCompletionTimeFormatted();
                 doc.insertString(doc.getLength(), completionTime, timeStyle);
                 doc.insertString(doc.getLength(), "\n", defaultStyle);
