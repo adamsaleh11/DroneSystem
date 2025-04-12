@@ -140,7 +140,7 @@ public class DroneSubsystem implements Runnable {
         double distance = Math.hypot(targetX - xPosition, targetY-yPosition);
         distance *=2;
         distanceTraveled += distance;
-        double speedMps = 200 * 1000 / 3600.0; // 30 km/h -> meters per second (≈8.33 m/s)
+        double speedMps = 60 * 1000 / 3600.0; // 30 km/h -> meters per second (≈8.33 m/s)
         int travelTimeMs = (int) (distance / speedMps * 1000); // total time in milliseconds
         try {
             if (faultInjected) {
